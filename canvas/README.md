@@ -24,4 +24,7 @@ live-server
 
 ## mini-project
 
-使用`canvas`实现的小型应用，比如使用`canvas`实现富文本编辑器
+使用`canvas`实现的小型应用
+
+### 使用`canvas`实现富文本编辑器
+
