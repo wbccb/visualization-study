@@ -7,7 +7,7 @@
     <title>canvas</title>
     <style>
         #app {
-            background: red;
+            background: rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
@@ -19,11 +19,40 @@
 
 <script>
     const canvas = document.getElementById("app");
-    canvas.width = 700;
-    canvas.height = 399;
+    canvas.width = 2000;
+    canvas.height = 1399;
 
     const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "blue";
-    ctx.fillRect(100, 100, 200, 200);
+
+    // 绘制直线
+    // ctx.beginPath();
+    // ctx.moveTo(100, 100); // 设置起点
+    // ctx.lineTo(400, 100); // 绘制边
+    // ctx.lineTo(400, 300); // 绘制边
+    // ctx.closePath(); // 闭合路线
+    // ctx.stroke();
+    // ctx.fillStyle = "red";
+    // ctx.fill();
+
+    // 绘制圆弧
+    // ctx.beginPath();
+    // // arc(中心点x, 中心点y, 半径, 开始弧度, 结束弧度, 方向)
+    // ctx.arc(400, 400, 200, 0, Math.PI * 3 / 2); // 顺时针绘制，0度是水平180度
+    // ctx.moveTo(800, 800); // 移动一个起点，然后连接下面绘制的弧度的0度的起点
+    // ctx.arc(400, 600, 200, 0, Math.PI * 3 / 2);
+    // ctx.stroke();
+
+    // 绘制切线圆弧
+    // arcTo(x1, y1, x2, y2, 半径) = 起点->(x1, y1)->(x2, y2)
+    // ctx.beginPath();
+    // ctx.moveTo(100, 100); // 设置起点
+    // ctx.arcTo(400, 100, 400, 300, 100);
+    // ctx.stroke();
+
+
+    // 二次贝塞尔曲线
+
+    // 三次贝塞尔曲线
+
 </script>
 </html>
