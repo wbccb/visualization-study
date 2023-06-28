@@ -96,10 +96,11 @@ ctx.closePath(); // 闭合路线
 ctx.stroke();
 ```
 
-1. 建立路径：`beginPath()`
-2. 移动起始点：`moveTo(x, y)`
+1. 建立第一条路径：`beginPath()`
+2. 建立子路径，设置起点：`moveTo(x, y)`
 3. 显示路径：填充`fill()` 或者 描边`stroke()`
 4. 闭合路径(与moveTo的起点连接起来)：`closePath()`
+5. 建立第二条路径，清空第一条路径：`beginPath()`
 
 主要分为：
 1. 绘制直线
@@ -108,3 +109,7 @@ ctx.stroke();
 4. 绘制二次贝塞尔曲线
 5. 绘制三次贝塞尔曲线
 6. 绘制矩形
+
+> 具体可以查看`demo/canvas-01-quick-start.html`
+
+

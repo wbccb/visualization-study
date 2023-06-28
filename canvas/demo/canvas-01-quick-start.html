@@ -51,8 +51,38 @@
 
 
     // 二次贝塞尔曲线
+    // ctx.beginPath(); // 开始绘制
+    // ctx.moveTo(50, 50); // 设置起点
+    // // 起点->控制点->结束点
+    // // quadraticCurveTo(控制点x，控制点y，结束点x，结束点y)
+    // ctx.quadraticCurveTo(
+    //     // 控制点
+    //     400, 500,
+    //     // 结束点
+    //     400, 250
+    // );
+    // ctx.stroke(); // 绘制线，不是填充
 
     // 三次贝塞尔曲线
+    // ctx.beginPath();
+    // ctx.moveTo(50, 50);
+    // ctx.bezierCurveTo(
+    //     // 控制点1
+    //     400, 50,
+    //     // 控制点2
+    //     400, 250,
+    //     // 结束点
+    //     600, 250
+    // );
+    // ctx.stroke();
+
+
+    // 矩形: rect(x，y, w, h)内置moveTo()功能，也就是不使用moveTo()可以重复绘制多个rect
+    ctx.beginPath();
+    ctx.rect(100, 100, 400, 200);
+    ctx.rect(200, 500, 400, 200);
+    ctx.stroke();
+
 
 </script>
 </html>
