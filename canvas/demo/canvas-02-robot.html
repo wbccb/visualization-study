@@ -23,65 +23,64 @@
     canvas.height = 1399;
 
     const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "red"; // 填充颜色
+    ctx.lineWidth = 40; // 描边宽度
 
-    // 绘制直线
-    // ctx.beginPath();
-    // ctx.moveTo(100, 100); // 设置起点
-    // ctx.lineTo(400, 100); // 绘制边
-    // ctx.lineTo(400, 300); // 绘制边
-    // ctx.closePath(); // 闭合路线
-    // ctx.stroke();
-    // ctx.fillStyle = "red";
-    // ctx.fill();
+    function render() {
+        // 机器人脸部填充：红色
+        ctx.fillRect(50, 250, 400, 200);
 
-    // 绘制圆弧
-    // ctx.beginPath();
-    // // arc(中心点x, 中心点y, 半径, 开始弧度, 结束弧度, 方向)
-    // ctx.arc(400, 400, 200, 0, Math.PI * 3 / 2); // 顺时针绘制，0度是水平180度
-    // ctx.moveTo(800, 800); // 移动一个起点，然后连接下面绘制的弧度的0度的起点
-    // ctx.arc(400, 600, 200, 0, Math.PI * 3 / 2);
-    // ctx.stroke();
+        // 机器人脸部线条：把红色部分内容盖住了
+        ctx.strokeRect(50, 250, 400, 200);
 
-    // 绘制切线圆弧
-    // arcTo(x1, y1, x2, y2, 半径) = 起点->(x1, y1)->(x2, y2)
-    // ctx.beginPath();
-    // ctx.moveTo(100, 100); // 设置起点
-    // ctx.arcTo(400, 100, 400, 300, 100);
-    // ctx.stroke();
+        // 眼罩：清除部分内容
+        ctx.clearRect(50, 300, 400, 60);
 
 
-    // 二次贝塞尔曲线
-    // ctx.beginPath(); // 开始绘制
-    // ctx.moveTo(50, 50); // 设置起点
-    // // 起点->控制点->结束点
-    // // quadraticCurveTo(控制点x，控制点y，结束点x，结束点y)
-    // ctx.quadraticCurveTo(
-    //     // 控制点
-    //     400, 500,
-    //     // 结束点
-    //     400, 250
-    // );
-    // ctx.stroke(); // 绘制线，不是填充
-
-    // 三次贝塞尔曲线
-    // ctx.beginPath();
-    // ctx.moveTo(50, 50);
-    // ctx.bezierCurveTo(
-    //     // 控制点1
-    //     400, 50,
-    //     // 控制点2
-    //     400, 250,
-    //     // 结束点
-    //     600, 250
-    // );
-    // ctx.stroke();
+        // 嘴巴: 路径
+        ctx.beginPath();
+        ctx.moveTo(150, 400);
+        ctx.lineTo(350, 400);
+        ctx.stroke();
 
 
-    // 矩形: rect(x，y, w, h)内置moveTo()功能，也就是不使用moveTo()可以重复绘制多个rect
-    ctx.beginPath();
-    ctx.rect(100, 100, 400, 200);
-    ctx.rect(200, 500, 400, 200);
-    ctx.stroke();
+        // 眼睛
+        ctx.beginPath();
+        ctx.arc(150, 330, 20, 0, Math.PI * 2);
+
+        ctx.moveTo(350 - 20, 340); // 起点应该在最左边:圆心-半径
+        ctx.arc(350, 340, 20, Math.PI, 0);
+        ctx.fill();
+
+
+        // 天线
+        ctx.beginPath();
+        ctx.moveTo(50, 50);
+        ctx.bezierCurveTo(
+            150, 50,
+            150, 250,
+            250, 250
+        );
+        ctx.moveTo(450, 50);
+        ctx.bezierCurveTo(
+            350, 50,
+            350, 250,
+            250, 250
+        );
+        ctx.stroke();
+    }
+
+    render();
+    // 添加交互动画：判断触摸点是不是在一定范围内，然后清除cavans+重绘canvas
+    canvas.addEventListener("mousemove", function ({clientX, clientY}) {
+        if(clientX > 30 && clientX < 470 && clientY > 230 && clientY < 470) {
+            ctx.fillStyle = "blue";
+        } else {
+            ctx.fillStyle = "red";
+        }
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        render();
+    });
 
 
 </script>
