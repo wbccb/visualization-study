@@ -14,7 +14,8 @@ export default defineConfig({
       {
         text: '基础用法',
         items: [
-          { text: '快速开始', link: '/1-base/quick-start' },
+          { text: '基础知识', link: '/1-base/0-quick-start' },
+          { text: '着色', link: '/1-base/1-color' },
         ]
       },
       {
