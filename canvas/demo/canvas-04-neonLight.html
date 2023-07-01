@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>canvas</title>
+    <style>
+        #app {
+            background: rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+<canvas id="app"></canvas>
+</body>
+
+
+<script>
+    const canvas = document.getElementById("app");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const ctx = canvas.getContext("2d");
+
+    // 绘制霓虹灯
+    // 1. 使用2个三次贝塞尔曲线（由4个点组成矩形中的曲线）
+    // 2. 使用两条stroke：一条实线，一条虚线，使用不同颜色进行绘制
+
+    const color = ["red", "yellow"];
+
+    function draw() {
+        ctx.save();
+
+        ctx.translate(300, 400);
+        ctx.beginPath();
+
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(-200, -50, -180, -300, 0, -200);
+        ctx.bezierCurveTo(180, -300, 200, -50, 0, 0);
+
+        // 绘制红线
+        ctx.lineWidth = 10;
+        ctx.strokeStyle = color[0];
+        ctx.setLineDash([30]); // 虚线显示
+        ctx.stroke();
+
+        // 绘制黄线
+        ctx.strokeStyle = color[1];
+        ctx.lineDashOffset = 30; // 虚线偏移
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    draw();
+
+    let t1 = 0;
+    // 形成环不停进行渲染
+    !(function antimation(t = 0) {
+        const t2 = t % 200; // [0, 200]
+        if (t1 > t2) {
+            // t处于[200, 300]时，t2=[0, 100]，t1此时为[100, 200]
+            // t处于[300, 400]时，t2=[100, 200]，t1此时为[0, 100]
+            color.reverse();
+            draw();
+        }
+        t1 = t2;
+
+        requestAnimationFrame(antimation);
+    })();
+
+
+</script>
+</html>
