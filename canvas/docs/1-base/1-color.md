@@ -1,13 +1,13 @@
-# 着色
+# 1.着色
 
-## 着色区域
+## 1.1 着色区域
 
 - 描边区域：`strokeStyle`代表描边样式，主要有`stroke()`、`strokeRect()`、`strokeText()`
 - 填充区域：`fillStyle`代表填充样式，主要有`fill()`、`fillRect()`、`fillText()`
 
-## 着色方式
+## 1.2 着色方式
 
-### 纯色
+### 1.2.1 纯色
 
 与`css`一致：
 - 颜色名称，比如`red`
@@ -20,9 +20,9 @@ ctx.fillStyle = "red";
 ctx.strokeStyle = "red";
 ```
 
-### 渐变
+### 1.2.2 渐变
 
-#### 线性渐变
+#### 1.2.2.1 线性渐变
 
 三个步骤：
 1. `ctx.createLinearGradient`创建起终点
@@ -40,7 +40,7 @@ linerGradient.addColorStop(1, "blue");
 ctx.fillStyle = linerGradient;
 ```
 
-#### 径向渐变
+#### 1.2.2.2 径向渐变
 
 ![径向渐变.png](../../images/1-color.png)
 
@@ -54,7 +54,7 @@ radGradient.addColorStop(1, "green");
 ```
 
 
-#### 纹理
+#### 1.2.2.3 纹理
 
 使用图像源(`image`、`video`、`canvas`)作为纹理对象，使用该纹理对象作为填充样式
 
@@ -70,7 +70,7 @@ img.onload = ()=> {
 ```
 
 
-## 影响描边样式的因素
+## 1.3 影响描边样式的因素
 
 - `strokeStyle`：描边颜色
 - `lineWidth`: 描边宽度
@@ -81,5 +81,12 @@ img.onload = ()=> {
 ![径向渐变.png](../../images/1-color-miterLimit.png)
 - `setLineDash`: 将描边设置为虚线，可以通过`getLineDash()`获取虚线样式
 - `lineDashOffset`: 虚线偏移一定距离
+
+# 2.投影
+
+```js
+ctx.shadowColor = "orange";
+ctx.shadowBlur = 50;
+```
 
 
