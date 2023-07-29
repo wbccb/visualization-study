@@ -9,8 +9,8 @@ class Grid {
     this.options = options; // 包含网格的格子大小
     this.size = options.size;
 
-    this.width = baseCanvas.width;
-    this.height = baseCanvas.height;
+    this.width = baseCanvas.getWidth();
+    this.height = baseCanvas.getHeight();
 
     const ctx = this.baseCanvas.getContext();
     ctx.lineWidth = 1;
@@ -25,10 +25,13 @@ class Grid {
     const h = this.height;
     const ctx = this.baseCanvas.getContext();
     const gridSize = this.size;
-    for (let j = -h / 2; j <= h / 2; j = j + gridSize) {
+    console.error("绘制网格", this.width, this.height);
+    console.error("h / 2", h / 2);
+
+    for (let j = 0; j <= h; j = j + gridSize) {
       ctx.beginPath();
-      ctx.moveTo(-w / 2, j);
-      ctx.lineTo(w / 2, j);
+      ctx.moveTo(0, j);
+      ctx.lineTo(w, j);
       ctx.closePath();
       ctx.stroke();
     }
@@ -39,10 +42,10 @@ class Grid {
     const h = this.height;
     const ctx = this.baseCanvas.getContext();
     const gridSize = this.size;
-    for (let i = -w / 2; i <= w / 2; i = i + gridSize) {
+    for (let i = 0; i <= w; i = i + gridSize) {
       ctx.beginPath();
-      ctx.moveTo(i, -h / 2);
-      ctx.lineTo(i, h / 2);
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i, h);
       ctx.closePath();
       ctx.stroke();
     }
