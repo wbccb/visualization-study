@@ -91,11 +91,9 @@ class BaseCanvas {
   /**
    * 封装ctx一系列操作，增强代码复用
    */
-  baseDrawRect(id, x, y, w, h) {
-    this.ctx.save();
-    this.ctx.translate(x, y);
-    this.ctx.strokeRect(0, 0, w, y);
-    this.ctx.restore();
+  baseDrawRect(id, data) {
+    const {x, y, w, h} = data;
+    this.ctx.strokeRect(x, y, w, h);
 
     this.saveItem(id, "baseDrawRect", {
       x,
@@ -123,9 +121,9 @@ class BaseCanvas {
     delete this.elements[id];
     // 重绘其它元素
     const keys = Object.keys(this.elements);
-    for (const key of keys) {
-      const {type, data} = this.elements[key];
-      this[type](data);
+    for (const id of keys) {
+      const {type, data} = this.elements[id];
+      this[type](id, data);
     }
   }
 }

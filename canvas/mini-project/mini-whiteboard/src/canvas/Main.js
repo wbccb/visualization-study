@@ -84,6 +84,7 @@ class Main {
       y: canvasPoint.y,
     };
     this.startPointId = nanoid(); //=> "V1StGXR8_Z5jdHi6B-myT"
+    console.error("新的id", this.startPointId);
   }
 
   onPointMove(e) {
@@ -94,12 +95,19 @@ class Main {
     const w = canvasPoint.x - this.startPoint.x;
     const h = canvasPoint.y - this.startPoint.y;
 
+    console.log(w, h);
+
     // TODO 如何清除之前画的？
     // 每次清除都要进行重绘
     if (Math.abs(w) + Math.abs(h) > 5) {
       console.log("onPointMove!!!!!!!!");
-      this.baseCanvas.deleteItem(this.startPointId); // 清除画布
-      this.baseCanvas.baseDrawRect(this.startPointId, this.startPoint.x, this.startPoint.y, w, h);
+      this.baseCanvas.deleteItem(this.startPointId);
+      this.baseCanvas.baseDrawRect(this.startPointId, {
+        x: this.startPoint.x,
+        y: this.startPoint.y,
+        w,
+        h,
+      });
     }
   }
 

@@ -8,13 +8,17 @@ class Coordinate {
 
   getTouchCanvasPoint(event) {
     const {offsetX, offsetY, clientX, clientY} = event;
-    // canvas可能不是以左上角开始绘制的，因此还得减去canvas的offsetLeft和offsetTop
+    // canvas可能不是以左上角开始绘制的，因此还得减去canvas的top和left
+    const {x, y, top, left} = this.baseCanvas.getCanvasDom().getBoundingClientRect();
+    // const {offsetLeft, offsetTop} = this.baseCanvas.getCanvasDom();
     // canvas可能还会滑动，因此得减去scrollX和scrollY
-    const {offsetLeft, offsetTop} = this.baseCanvas.getCanvasDom();
+
+    console.error("top", top, left);
+    // console.error("offsetTop", offsetTop, offsetLeft);
 
     return {
-      x: clientX - offsetLeft,
-      y: clientY - offsetTop,
+      x: clientX - left,
+      y: clientY - top,
     };
   }
 

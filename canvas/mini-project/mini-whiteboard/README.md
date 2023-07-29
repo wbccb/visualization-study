@@ -39,3 +39,4 @@
 1. [我做了一个在线白板！](https://juejin.cn/post/7091276963146530847)
 2. [LogicFlow](https://github.com/didi/LogicFlow)
 3. [excalidraw](https://github.com/excalidraw/excalidraw)
+4. [用 canvas 搞一个滑动刻度尺](https://juejin.cn/post/6962152799601688613)
