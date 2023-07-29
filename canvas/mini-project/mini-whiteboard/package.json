@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite --force",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "format": "prettier --write 'src/**/*.+(js|ts|jsx|tsx)'"
   },
   "dependencies": {
     "eslint": "^8.44.0",
+    "prettier": "^3.0.0",
     "vue": "^3.3.4"
   },
   "devDependencies": {

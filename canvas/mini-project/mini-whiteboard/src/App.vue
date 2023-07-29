@@ -9,6 +9,7 @@
 <script>
 import {onMounted} from "vue";
 import Grid from "./canvas/Grid.js";
+import Main from "./canvas/Main.js";
 import BaseCanvas from "./canvas/base/BaseCanvas.js";
 
 export default {
