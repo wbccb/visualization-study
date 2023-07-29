@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "eslint": "^8.44.0",
+    "nanoid": "^4.0.2",
     "prettier": "^3.0.0",
     "vue": "^3.3.4"
   },

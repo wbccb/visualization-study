@@ -1,3 +1,5 @@
+import Coordinate from "./Coordinate.js";
+
 /**
  * 封装通用方法，在这个类中进行canvas的初始化，然后将canvas传入到管理类中
  * 宽度和高度由domId的css对应的width和height控制
@@ -19,10 +21,28 @@ class BaseCanvas {
     this.width = offsetWidth;
     this.height = offsetHeight;
 
+    this.state = {
+      scale: 1,
+      scrollX: 0,
+      scrollY: 0,
+    };
+    this.coordinate = new Coordinate(this);
+
     if (isRenderImmediately) {
       //如果isRenderImmediately=false，那么renderCanvas可以在各自的管理类中进行管理
       this.renderCanvas();
     }
+
+    // 所有绘制数据的管理，用于清除某一个数据进行重绘
+    this.elements = [];
+  }
+
+  getTouchCanvasPoint(event) {
+    return this.coordinate.getTouchCanvasPoint(event);
+  }
+
+  getCanvasDom() {
+    return this.canvasDom;
   }
 
   renderCanvas() {
@@ -59,11 +79,54 @@ class BaseCanvas {
     return this.height;
   }
 
+  getTouch() {}
+
   /**
    * 清除画布
    */
   clearCanvas() {
     this.ctx.clearRect(0, 0, this.width, this.height);
+  }
+
+  /**
+   * 封装ctx一系列操作，增强代码复用
+   */
+  baseDrawRect(id, x, y, w, h) {
+    this.ctx.save();
+    this.ctx.translate(x, y);
+    this.ctx.strokeRect(0, 0, w, y);
+    this.ctx.restore();
+
+    this.saveItem(id, "baseDrawRect", {
+      x,
+      y,
+      w,
+      h,
+    });
+  }
+
+  saveItem(id, type, data = {}) {
+    this.elements[id] = {
+      type: type,
+      data: data,
+    };
+  }
+
+  deleteItem(id) {
+    if (!this.elements[id]) {
+      // 不存在的话不用触发重绘
+      return;
+    }
+    // 清除所有画布
+    this.clearCanvas();
+    // 清除指定item
+    delete this.elements[id];
+    // 重绘其它元素
+    const keys = Object.keys(this.elements);
+    for (const key of keys) {
+      const {type, data} = this.elements[key];
+      this[type](data);
+    }
   }
 }
 

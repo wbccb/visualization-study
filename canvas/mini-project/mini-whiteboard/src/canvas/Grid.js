@@ -45,6 +45,15 @@ class Grid {
     for (let i = 0; i <= w; i = i + gridSize) {
       ctx.beginPath();
       ctx.moveTo(i, 0);
+      // TODO 实现刻度尺，方便比对坐标，现在rect画出来的坐标都不对
+      // if (i % (4 * gridSize) === 0) {
+      //   ctx.save();
+      //   ctx.beginPath();
+      //   ctx.arc(i, 0, 2, 0, 2 * Math.PI, false);
+      //   ctx.fillText(`(${i},0)`, i, 10);
+      //   ctx.closePath();
+      //   ctx.restore();
+      // }
       ctx.lineTo(i, h);
       ctx.closePath();
       ctx.stroke();
