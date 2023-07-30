@@ -103,6 +103,18 @@ class BaseCanvas {
     });
   }
 
+  baseDrawCenterArc(id) {
+    const width = this.width;
+    const height = this.height;
+    this.ctx.strokeStyle = "blue";
+    this.ctx.beginPath();
+    this.ctx.arc(width / 2, height / 2, 2, 0, 2 * Math.PI, true);
+    this.ctx.fillText("中心点", width / 2 + 5, height / 2 + 5);
+    this.ctx.stroke();
+
+    this.saveItem(id, "baseDrawCenterArc");
+  }
+
   saveItem(id, type, data = {}) {
     this.elements[id] = {
       type: type,
