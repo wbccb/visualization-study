@@ -124,19 +124,61 @@ class BaseCanvas extends EventListener {
   /**
    * 封装ctx一系列操作，增强代码复用
    */
-  baseDrawRect(id, data) {
+  baseDrawRect(id, data, isTouch = false) {
     // 目前scrollX和scrollY都已经在点击中计算出来了，因此这里的x和y都是有偏移量scroll的值
-    const {x, y, w, h} = data;
+    let {x, y, w, h, scrollX: lastScrollX, scrollY: lastScrollY} = data;
     this.ctx.save();
     const state = this.state;
-    // this.ctx.translate(state.scrollX, state.scrollY);
+
+    //TODO 为什么可以不用translate，坐标就是对的？？？
+    // 答：saveItem()的时候我主动减去了scrollX!难道我这里拿到的x是有加上scrollX的？？
+    // 最终答：因为坐标原点没有变化！我现在滑动后，是将坐标系translate然后重绘制，每次重绘制后都会restore
+    // 因此我的坐标系的原点还是中央那个点！虽然我的画布偏移了！！！但是记住，我每次重绘制后都会restore
+    // 坐标系还是原点啊，因此我绘制矩形时，手指触碰的位置还是用 clientX-left，而不用加上scrollX！因为坐标系都没变化！
+
+    // if (!isTouch) {
+    //   x = x + lastScrollX - state.scrollX;
+    //   y = y + lastScrollY - state.scrollY;
+    // }
+
+    console.error("绘制矩形中x====", x, lastScrollX, state.scrollX);
+    console.info("绘制矩形中y====", y, lastScrollY, state.scrollY);
+    console.warn("不停绘制的差值是", lastScrollY - state.scrollY);
+    console.warn("不停绘制的差值是", data.scrollY - state.scrollY);
+
+    this.ctx.translate(state.scrollX, state.scrollY);
+
+    //TODO 那存储该如何存储？？不能存储没有scrollX的坐标吧？？
 
     this.ctx.strokeStyle = "blue";
     this.ctx.strokeRect(x, y, w, h);
     this.ctx.restore();
 
-    // 保存的都是没有scrollX和scrollY的值
+    // 此时的x和y都是加上偏移量scrollX和scrollY的
     this.saveItem(id, "baseDrawRect", {
+      x,
+      y,
+      w,
+      h,
+      scrollX: state.scrollX,
+      scrollY: state.scrollY,
+    });
+  }
+
+  baseDrawDiamond(id, data) {
+    const ctx = this.ctx;
+    const {x, y, w, h} = data;
+    ctx.save();
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = "2px";
+    ctx.beginPath();
+    ctx.moveTo(x + w / 2, y);
+    ctx.lineTo(x + w, y + h / 2);
+    ctx.lineTo(x + w / 2, y + h);
+    ctx.lineTo(x, y + h / 2);
+    ctx.closePath();
+    ctx.restore();
+    this.saveItem(id, "baseDrawDiamond", {
       x,
       y,
       w,
@@ -168,8 +210,8 @@ class BaseCanvas extends EventListener {
 
   saveItem(id, type, data = {}) {
     // 存储的data={x,y}中的x和y应该是去除scrollX和scrollY的值
-    data.x = data.x - this.state.scrollX;
-    data.y = data.y - this.state.scrollY;
+    data.x = data.x;
+    data.y = data.y;
     this.elements[id] = {
       type: type,
       data: data,
@@ -186,7 +228,7 @@ class BaseCanvas extends EventListener {
       // 转化为最新scrollX和scrollY的值
       data.x = data.x + this.state.scrollX;
       data.y = data.y + this.state.scrollY;
-      this[type](id, data);
+      this[type](id, data, false);
     }
   }
 

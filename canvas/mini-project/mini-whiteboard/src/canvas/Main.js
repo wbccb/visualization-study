@@ -87,12 +87,18 @@ class Main {
     if (Math.abs(w) + Math.abs(h) > 5) {
       console.log("onPointMove!!!!!!!!");
       this.baseCanvas.deleteItem(this.startPointId);
-      this.baseCanvas.baseDrawRect(this.startPointId, {
-        x: this.startPoint.x,
-        y: this.startPoint.y,
-        w,
-        h,
-      });
+      this.baseCanvas.baseDrawRect(
+        this.startPointId,
+        {
+          x: this.startPoint.x,
+          y: this.startPoint.y,
+          w,
+          h,
+          scrollX: this.baseCanvas.state.scrollX,
+          scrollY: this.baseCanvas.state.scrollY,
+        },
+        true,
+      );
     }
   }
 

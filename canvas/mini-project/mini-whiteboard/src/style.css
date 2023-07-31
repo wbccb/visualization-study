@@ -12,6 +12,12 @@ html, body, #app {
     justify-content: center;
 }
 
+.btn-wrapper {
+    position: fixed;
+    right: 10px;
+    top: 10px;
+}
+
 .content {
     width: 600px;
     height: 600px;

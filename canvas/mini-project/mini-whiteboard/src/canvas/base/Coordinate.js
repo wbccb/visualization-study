@@ -24,8 +24,8 @@ class Coordinate {
     // console.error("offsetTop", offsetTop, offsetLeft);
 
     return {
-      x: clientX - left,
-      y: clientY - top,
+      x: clientX - left - scrollX,
+      y: clientY - top - scrollY,
     };
   }
 
