@@ -85,7 +85,7 @@ class Main {
     // TODO 如何清除之前画的？
     // 每次清除都要进行重绘
     if (Math.abs(w) + Math.abs(h) > 5) {
-      console.log("onPointMove!!!!!!!!");
+      // console.log("onPointMove!!!!!!!!");
       this.baseCanvas.deleteItem(this.startPointId);
       this.baseCanvas.baseDrawRect(
         this.startPointId,

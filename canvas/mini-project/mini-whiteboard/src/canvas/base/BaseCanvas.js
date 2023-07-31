@@ -141,11 +141,15 @@ class BaseCanvas extends EventListener {
     //   y = y + lastScrollY - state.scrollY;
     // }
 
-    console.error("绘制矩形中x====", x, lastScrollX, state.scrollX);
-    console.info("绘制矩形中y====", y, lastScrollY, state.scrollY);
-    console.warn("不停绘制的差值是", lastScrollY - state.scrollY);
-    console.warn("不停绘制的差值是", data.scrollY - state.scrollY);
+    // console.error("绘制矩形中x====", x, lastScrollX, state.scrollX);
+    // console.info("绘制矩形中y====", y, lastScrollY, state.scrollY);
+    // console.warn("不停绘制的差值是", lastScrollY - state.scrollY);
+    // console.warn("不停绘制的差值是", data.scrollY - state.scrollY);
 
+    // Coordinate.js不减去scrollX和scrollY
+    // 这里不translate(scrollX, scrollY)
+    // 那么就一切正常！
+    console.warn("----- ctx.translate-----", state.scrollX, state.scrollY);
     this.ctx.translate(state.scrollX, state.scrollY);
 
     //TODO 那存储该如何存储？？不能存储没有scrollX的坐标吧？？
