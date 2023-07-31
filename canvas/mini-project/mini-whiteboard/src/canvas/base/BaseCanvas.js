@@ -1,11 +1,14 @@
 import Coordinate from "./Coordinate.js";
+import {throttle} from "../util/utils.js";
+import EventListener from "../util/eventListener.js";
 
 /**
  * 封装通用方法，在这个类中进行canvas的初始化，然后将canvas传入到管理类中
  * 宽度和高度由domId的css对应的width和height控制
  */
-class BaseCanvas {
+class BaseCanvas extends EventListener {
   constructor(domId, isRenderImmediately = true) {
+    super(domId);
     // 外部传入的canvas，为了所有元素都绘制在同一个canvas上面
     const canvasDom = document.getElementById(domId);
     if (!canvasDom) {
@@ -35,10 +38,62 @@ class BaseCanvas {
 
     // 所有绘制数据的管理，用于清除某一个数据进行重绘
     this.elements = [];
+
+    this.initListener();
+  }
+
+  initListener() {
+    const forceRender = throttle(this.reRender, 100);
+    // 注册滑动事件
+    this.canvasDom.addEventListener("wheel", (event) => {
+      const {deltaX, deltaY} = event;
+      const scrollX = this.state.scrollX;
+      const scrollY = this.state.scrollY;
+
+      console.info("wheel", deltaX, deltaY);
+
+      this.state.scrollX = scrollX - deltaX;
+      this.state.scrollY = scrollY - deltaY;
+
+      // 滑动的同时要设置对应的
+      // this.ctx.translate(this.state.scrollX, this.state.scrollY);
+
+      console.info("最新的scrollX/scrollY", this.state.scrollX, this.state.scrollY);
+
+      forceRender.call(this);
+      this.emitEvent("wheelChange", {
+        scrollX,
+        scrollY,
+      });
+    });
+
+    this.canvasDom.addEventListener("mousewheel", (event) => {
+      const {deltaX, deltaY} = event;
+      const scrollX = this.state.scrollX;
+      const scrollY = this.state.scrollY;
+
+      console.info("wheel", deltaX, deltaY);
+
+      this.state.scrollX = scrollX - deltaX;
+      this.state.scrollY = scrollY - deltaY;
+
+      // 滑动的同时要设置对应的
+      // this.ctx.translate(this.state.scrollX, this.state.scrollY);
+
+      console.info("最新的scrollX/scrollY", this.state.scrollX, this.state.scrollY);
+
+      forceRender.call(this);
+      this.emitEvent("wheelChange", {
+        scrollX,
+        scrollY,
+      });
+    });
   }
 
   getTouchCanvasPoint(event) {
-    return this.coordinate.getTouchCanvasPoint(event);
+    const scrollX = this.state.scrollX;
+    const scrollY = this.state.scrollY;
+    return this.coordinate.getTouchCanvasPoint(event, scrollX, scrollY);
   }
 
   getCanvasDom() {
@@ -92,6 +147,7 @@ class BaseCanvas {
    * 封装ctx一系列操作，增强代码复用
    */
   baseDrawRect(id, data) {
+    // scrollY+scrollX的偏移应该放在getTouchCanvasPoint()中，而不是在每一个基础方法都写一遍scrollX
     const {x, y, w, h} = data;
     this.ctx.strokeRect(x, y, w, h);
 
@@ -103,23 +159,15 @@ class BaseCanvas {
     });
   }
 
-  baseDrawCenterArc(id) {
-    const width = this.width;
-    const height = this.height;
-    this.ctx.strokeStyle = "blue";
-    this.ctx.beginPath();
-    this.ctx.arc(width / 2, height / 2, 2, 0, 2 * Math.PI, true);
-    this.ctx.fillText("中心点", width / 2 + 5, height / 2 + 5);
-    this.ctx.stroke();
+  getXYByScroll(x, y) {
+    const scrollX = this.state.scrollX;
+    const scrollY = this.state.scrollY;
 
-    this.saveItem(id, "baseDrawCenterArc");
-  }
-
-  saveItem(id, type, data = {}) {
-    this.elements[id] = {
-      type: type,
-      data: data,
-    };
+    return [x + scrollX, y + scrollY];
+    // return {
+    //   x: x + scrollX,
+    //   y: y + scrollY,
+    // };
   }
 
   deleteItem(id) {
@@ -127,16 +175,42 @@ class BaseCanvas {
       // 不存在的话不用触发重绘
       return;
     }
-    // 清除所有画布
-    this.clearCanvas();
     // 清除指定item
     delete this.elements[id];
     // 重绘其它元素
+    this.reRender();
+  }
+
+  saveItem(id, type, data = {}) {
+    // 存储的data={x,y}中的x和y应该是去除scrollX和scrollY的值
+    data.x = data.x - this.state.scrollX;
+    data.y = data.y - this.state.scrollY;
+    this.elements[id] = {
+      type: type,
+      data: data,
+    };
+  }
+
+  reRender() {
+    // 清除所有画布
+    this.clearCanvas();
+
     const keys = Object.keys(this.elements);
     for (const id of keys) {
       const {type, data} = this.elements[id];
+      // 转化为最新scrollX和scrollY的值
+      data.x = data.x + this.state.scrollX;
+      data.y = data.y + this.state.scrollY;
       this[type](id, data);
     }
+  }
+
+  addEventListener(type, fn) {
+    this.canvasDom.addEventListener(type, fn);
+  }
+
+  removeEventListener(type, fn) {
+    this.canvasDom.removeEventListener(type, fn);
   }
 }
 

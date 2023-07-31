@@ -13,18 +13,18 @@ html, body, #app {
 }
 
 .content {
-    width: 400px;
-    height: 400px;
+    width: 600px;
+    height: 600px;
     position: absolute;
     top: 40px;
     left: 40px;
+    overflow: scroll;
+    border: 1px solid #333;
 }
 
 
 #canvas, #main {
-    width: 400px;
-    height: 400px;
-    position: absolute;
-    top: 0px;
-    left: 0px;
+    width: 600px;
+    height: 600px;
+    overflow: scroll;
 }
