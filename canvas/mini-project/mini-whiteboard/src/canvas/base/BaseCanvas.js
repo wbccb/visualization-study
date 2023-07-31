@@ -43,7 +43,7 @@ class BaseCanvas extends EventListener {
   }
 
   initListener() {
-    const forceRender = throttle(this.reRender, 100);
+    const forceRender = throttle(this.reRender, 0);
     // 注册滑动事件，由于有两个canvas，因此wheel事件注册在它们的parent上
     this.canvasDom.parentElement.addEventListener("wheel", (event) => {
       const {deltaX, deltaY} = event;
