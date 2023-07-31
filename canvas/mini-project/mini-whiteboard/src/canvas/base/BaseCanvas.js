@@ -136,10 +136,13 @@ class BaseCanvas extends EventListener {
     // 因此我的坐标系的原点还是中央那个点！虽然我的画布偏移了！！！但是记住，我每次重绘制后都会restore
     // 坐标系还是原点啊，因此我绘制矩形时，手指触碰的位置还是用 clientX-left，而不用加上scrollX！因为坐标系都没变化！
 
-    // if (!isTouch) {
-    //   x = x + lastScrollX - state.scrollX;
-    //   y = y + lastScrollY - state.scrollY;
-    // }
+    if (!isTouch) {
+      console.warn("----- isTouch-----", lastScrollX, state.scrollX);
+      console.warn("----- isTouch-----", lastScrollY, state.scrollY);
+      // TODO 为啥去掉这一句就正常了？不去掉滑动时位置都重绘错误
+      // x = x + lastScrollX - state.scrollX;
+      // y = y + lastScrollY - state.scrollY;
+    }
 
     // console.error("绘制矩形中x====", x, lastScrollX, state.scrollX);
     // console.info("绘制矩形中y====", y, lastScrollY, state.scrollY);
@@ -230,8 +233,8 @@ class BaseCanvas extends EventListener {
     for (const id of keys) {
       const {type, data} = this.elements[id];
       // 转化为最新scrollX和scrollY的值
-      data.x = data.x + this.state.scrollX;
-      data.y = data.y + this.state.scrollY;
+      data.x = data.x;
+      data.y = data.y;
       this[type](id, data, false);
     }
   }
