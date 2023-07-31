@@ -39,22 +39,30 @@ class Main {
   startDrawRect() {
     const fn = throttle(this.onPointMove);
     const canvasDom = this.baseCanvas.getCanvasDom();
-    canvasDom.addEventListener("mousedown", (e) => {
-      this.onPointDown(e);
-    });
-    canvasDom.addEventListener("mousemove", (e) => {
+
+    // 指针函数的this绑定后无法改变
+    this.eventListenerPointerMove = (e) => {
       if (!this.startPointId) return;
       fn.call(this, e); // 相当于this.fn而不是window.fn
-    });
-    canvasDom.addEventListener("mouseup", (e) => {
+    };
+
+    this.eventListenerPointerUp = (e) => {
       this.onPointUp(e);
+    };
+
+    canvasDom.addEventListener("pointerdown", (e) => {
+      console.warn("Main pointerDown");
+      canvasDom.addEventListener("pointermove", this.eventListenerPointerMove);
+      canvasDom.addEventListener("pointerup", this.eventListenerPointerUp);
+      this.onPointDown(e);
     });
   }
 
   onPointDown(e) {
+    // getTouchCanvasPoint()不加scrollX和scrollY
     const canvasPoint = this.baseCanvas.getTouchCanvasPoint(e);
     console.log("pointerdown!!!!!!!!");
-    const {x, y} = canvasPoint; // 已经加上scrollX和scrollY
+    const {x, y} = canvasPoint;
 
     this.startPoint = {
       x,
@@ -95,6 +103,10 @@ class Main {
 
     this.startPointId = undefined;
     this.startPoint = undefined;
+
+    const canvasDom = this.baseCanvas.getCanvasDom();
+    canvasDom.addEventListener("pointermove", this.eventListenerPointerMove);
+    canvasDom.addEventListener("pointerup", this.eventListenerPointerUp);
   }
 }
 

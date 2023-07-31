@@ -44,30 +44,8 @@ class BaseCanvas extends EventListener {
 
   initListener() {
     const forceRender = throttle(this.reRender, 100);
-    // 注册滑动事件
-    this.canvasDom.addEventListener("wheel", (event) => {
-      const {deltaX, deltaY} = event;
-      const scrollX = this.state.scrollX;
-      const scrollY = this.state.scrollY;
-
-      console.info("wheel", deltaX, deltaY);
-
-      this.state.scrollX = scrollX - deltaX;
-      this.state.scrollY = scrollY - deltaY;
-
-      // 滑动的同时要设置对应的
-      // this.ctx.translate(this.state.scrollX, this.state.scrollY);
-
-      console.info("最新的scrollX/scrollY", this.state.scrollX, this.state.scrollY);
-
-      forceRender.call(this);
-      this.emitEvent("wheelChange", {
-        scrollX,
-        scrollY,
-      });
-    });
-
-    this.canvasDom.addEventListener("mousewheel", (event) => {
+    // 注册滑动事件，由于有两个canvas，因此wheel事件注册在它们的parent上
+    this.canvasDom.parentElement.addEventListener("wheel", (event) => {
       const {deltaX, deltaY} = event;
       const scrollX = this.state.scrollX;
       const scrollY = this.state.scrollY;
@@ -147,10 +125,17 @@ class BaseCanvas extends EventListener {
    * 封装ctx一系列操作，增强代码复用
    */
   baseDrawRect(id, data) {
-    // scrollY+scrollX的偏移应该放在getTouchCanvasPoint()中，而不是在每一个基础方法都写一遍scrollX
+    // 目前scrollX和scrollY都已经在点击中计算出来了，因此这里的x和y都是有偏移量scroll的值
     const {x, y, w, h} = data;
-    this.ctx.strokeRect(x, y, w, h);
+    this.ctx.save();
+    const state = this.state;
+    // this.ctx.translate(state.scrollX, state.scrollY);
 
+    this.ctx.strokeStyle = "blue";
+    this.ctx.strokeRect(x, y, w, h);
+    this.ctx.restore();
+
+    // 保存的都是没有scrollX和scrollY的值
     this.saveItem(id, "baseDrawRect", {
       x,
       y,

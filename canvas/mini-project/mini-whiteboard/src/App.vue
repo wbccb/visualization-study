@@ -23,8 +23,8 @@ export default {
         size: 20,
       });
 
-      // const mainBaseCanvas = new BaseCanvas("main");
-      // const main = new Main(mainBaseCanvas);
+      const mainBaseCanvas = new BaseCanvas("main");
+      const main = new Main(mainBaseCanvas);
 
       const domWrapper = document.getElementById("wrapper");
       // domWrapper.addEventListener("pointermove", (event) => {

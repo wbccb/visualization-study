@@ -18,18 +18,14 @@ class Coordinate {
     console.error("top", top, left);
     console.error("offsetLeft", offsetTop, offsetLeft);
     console.error("canvasScrollY", canvasScrollX, canvasScrollY);
-    console.error(
-      "最终点击的canvas坐标",
-      clientX - left - canvasScrollX,
-      clientY - top - canvasScrollY,
-    );
+    console.error("最终点击的canvas坐标", clientX - left, clientY - top);
     console.warn("=====================================");
 
     // console.error("offsetTop", offsetTop, offsetLeft);
 
     return {
-      x: clientX - left - canvasScrollX,
-      y: clientY - top - canvasScrollY,
+      x: clientX - left,
+      y: clientY - top,
     };
   }
 
