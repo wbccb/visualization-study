@@ -10,7 +10,7 @@
 - [ ]  支持绘制菱形、三角形、圆形、线段、箭头、自由画笔、文字、图片
 - [ ]  绘制的图形支持拖动、缩放、旋转
 - [ ]  支持放大缩小
-- [ ]  性能优化
+- [ ]  性能优化实践
 - [ ]  支持下载图片
 - [ ]  支持转化为svg
 
@@ -18,6 +18,7 @@
 
 实现`canvas`的相关功能，包括背景网格、矩形、菱形、三角形、圆形、线段、箭头、自由画笔、文字、图片的相关封装
 
+> 动画可以参考：https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API/Tutorial/Advanced_animations
 
 ## 其它文件
 
@@ -64,6 +65,10 @@ y = y+scrollY
     overflow: scroll;
 }
 ```
+
+## 性能优化
+1. https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas
+2. 
 
 
 # 参考

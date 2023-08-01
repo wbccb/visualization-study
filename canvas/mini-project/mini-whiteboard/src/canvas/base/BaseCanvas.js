@@ -47,18 +47,18 @@ class BaseCanvas extends EventListener {
     // 注册滑动事件，由于有两个canvas，因此wheel事件注册在它们的parent上
     this.canvasDom.parentElement.addEventListener("wheel", (event) => {
       const {deltaX, deltaY} = event;
-      const scrollX = this.state.scrollX;
-      const scrollY = this.state.scrollY;
+      const oldScrollX = this.state.scrollX;
+      const oldScrollY = this.state.scrollY;
 
-      console.info("wheel", deltaX, deltaY);
+      // console.info("wheel", deltaX, deltaY);
 
-      this.state.scrollX = scrollX - deltaX;
-      this.state.scrollY = scrollY - deltaY;
+      this.state.scrollX = oldScrollX - deltaX;
+      this.state.scrollY = oldScrollY - deltaY;
 
       // 滑动的同时要设置对应的
       // this.ctx.translate(this.state.scrollX, this.state.scrollY);
 
-      console.info("最新的scrollX/scrollY", this.state.scrollX, this.state.scrollY);
+      // console.info("最新的scrollX/scrollY", this.state.scrollX, this.state.scrollY);
 
       forceRender.call(this);
       this.emitEvent("wheelChange", {
@@ -136,13 +136,21 @@ class BaseCanvas extends EventListener {
     // 因此我的坐标系的原点还是中央那个点！虽然我的画布偏移了！！！但是记住，我每次重绘制后都会restore
     // 坐标系还是原点啊，因此我绘制矩形时，手指触碰的位置还是用 clientX-left，而不用加上scrollX！因为坐标系都没变化！
 
-    if (!isTouch) {
-      console.warn("----- isTouch-----", lastScrollX, state.scrollX);
-      console.warn("----- isTouch-----", lastScrollY, state.scrollY);
-      // TODO 为啥去掉这一句就正常了？不去掉滑动时位置都重绘错误
-      // x = x + lastScrollX - state.scrollX;
-      // y = y + lastScrollY - state.scrollY;
-    }
+    // if (!isTouch) {
+    console.warn("----- isTouch-----", lastScrollX !== state.scrollX);
+    console.warn("----- isTouch-----", lastScrollY !== state.scrollY);
+    // TODO 为啥去掉这一句就正常了？不去掉滑动时位置都重绘错误
+
+    // 我的想法是：减去上次的偏移量，加上这次的偏移量
+    // x = x + testSrollX - state.scrollX;
+    // y = y + lastScrollY - state.scrollY;
+
+    // 我去！！！你要记住一件事，你下面是要this.ctx.translate(state.scrollX, state.scrollY)
+    // 因此你的rect可以恢复到没有scrollX的位置啊啊啊啊！！也就是x和y一直都不变！！！！！然后原点translate即可！！！啊啊啊啊
+    // 其它也是这样啊！！！！无论如何滑动，绘制时的x和y都是一样的，我们只操作ctx.translate！！！
+    x = x + lastScrollX;
+    y = y + lastScrollY;
+    // }
 
     // console.error("绘制矩形中x====", x, lastScrollX, state.scrollX);
     // console.info("绘制矩形中y====", y, lastScrollY, state.scrollY);
@@ -152,7 +160,10 @@ class BaseCanvas extends EventListener {
     // Coordinate.js不减去scrollX和scrollY
     // 这里不translate(scrollX, scrollY)
     // 那么就一切正常！
+    console.warn("----- ctx.translate-----", x, y);
     console.warn("----- ctx.translate-----", state.scrollX, state.scrollY);
+    console.warn("----- ctx.translate原点一直是-----", x + lastScrollX, y + lastScrollY);
+
     this.ctx.translate(state.scrollX, state.scrollY);
 
     //TODO 那存储该如何存储？？不能存储没有scrollX的坐标吧？？
@@ -160,8 +171,16 @@ class BaseCanvas extends EventListener {
     this.ctx.strokeStyle = "blue";
     this.ctx.strokeRect(x, y, w, h);
     this.ctx.restore();
+    // if (!isTouch) {
+    // restore()了，存入的坐标恢复加上scrollX和scrollY
+    x = x - state.scrollX;
+    y = y - state.scrollY;
+    // }
 
     // 此时的x和y都是加上偏移量scrollX和scrollY的
+    console.info("========");
+    console.info(x, y, w, h, state.scrollX, state.scrollY);
+
     this.saveItem(id, "baseDrawRect", {
       x,
       y,
@@ -217,12 +236,18 @@ class BaseCanvas extends EventListener {
 
   saveItem(id, type, data = {}) {
     // 存储的data={x,y}中的x和y应该是去除scrollX和scrollY的值
-    data.x = data.x;
-    data.y = data.y;
     this.elements[id] = {
       type: type,
       data: data,
     };
+    if (!window.test) {
+      window.test = {};
+    }
+    if (!window.test[id]) {
+      window.test[id] = [JSON.stringify(data)];
+    } else {
+      window.test[id].push(JSON.stringify(data));
+    }
   }
 
   reRender() {
@@ -232,9 +257,7 @@ class BaseCanvas extends EventListener {
     const keys = Object.keys(this.elements);
     for (const id of keys) {
       const {type, data} = this.elements[id];
-      // 转化为最新scrollX和scrollY的值
-      data.x = data.x;
-      data.y = data.y;
+      // data携带scrollX以及已经加上scrollX的x和y
       this[type](id, data, false);
     }
   }
