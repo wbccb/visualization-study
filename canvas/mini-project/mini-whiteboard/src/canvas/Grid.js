@@ -42,20 +42,52 @@ class Grid {
    * 绘制坐标轴，可以方便进行坐标调试和滑动效果查看
    */
   renderCoordinateAxis() {
-    const arrowSize = 10;
-    const space = 20;
-
-    const width = this.width;
-    const height = this.height;
-
-    const x0 = 0;
-    const y0 = 0;
-
-    // 计算坐标系的原点坐标
-
-    // 计算坐标系x轴的最远坐标点以及对应三角形的坐标点
-
-    // 计算坐标系y轴的最远坐标点以及对应三角形的坐标点
+    const ctx = this.baseCanvas.ctx;
+    const {scrollX, scrollY} = this.baseCanvas.state;
+    ctx.save();
+    const itemValueY = 100; // 每一个刻度100
+    const itemValueX = 100; // 每一个刻度100
+    const tickLength = 8;
+    const canvas = ctx.canvas;
+    ctx.translate(scrollX, scrollY);
+    ctx.strokeStyle = "#6F7079";
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(0, -scrollY);
+    ctx.lineTo(0, canvas.height - scrollY);
+    ctx.moveTo(-scrollX, 0);
+    ctx.lineTo(canvas.width - scrollX, 0);
+    ctx.stroke();
+    ctx.restore();
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.textBaseline = "middle";
+    for (let i = 0; i < scrollY / itemValueY; i++) {
+      ctx.moveTo(0, -i * itemValueY);
+      ctx.lineTo(tickLength, -i * itemValueY);
+      ctx.font = "10px";
+      ctx.fillText((-i * 100).toString(), -26, -i * itemValueY);
+    }
+    for (let i = 0; i < (canvas.height - scrollY) / itemValueY; i++) {
+      ctx.moveTo(0, i * itemValueY);
+      ctx.lineTo(tickLength, i * itemValueY);
+      ctx.font = "10px";
+      ctx.fillText((i * 100).toString(), -26, i * itemValueY);
+    }
+    for (let i = 1; i < scrollX / itemValueX; i++) {
+      ctx.moveTo(-i * itemValueX, 0);
+      ctx.lineTo(-i * itemValueX, tickLength);
+      ctx.font = "10px";
+      ctx.fillText((-i * 100).toString(), -i * itemValueX - 10, -8);
+    }
+    for (let i = 1; i < (canvas.width - scrollX) / itemValueX; i++) {
+      ctx.moveTo(i * itemValueX, 0);
+      ctx.lineTo(i * itemValueX, tickLength);
+      ctx.font = "10px";
+      ctx.fillText((i * 100).toString(), i * itemValueX - 5, -8);
+    }
+    ctx.stroke();
+    ctx.restore();
   }
 
   renderCenter() {
@@ -78,7 +110,7 @@ class Grid {
 
     // const [textX, textY] = this.getXYByScroll(width / 2 + 5, height / 2 + 5);
     const [textX, textY] = [width / 2 + 5, height / 2 + 5];
-    ctx.fillText("中心点", textX, textY);
+    ctx.fillText("网格中心点", textX, textY);
 
     ctx.stroke();
 
@@ -92,8 +124,8 @@ class Grid {
     const ctx = this.baseCanvas.getContext();
     const state = this.baseCanvas.state;
     const gridSize = this.size;
-    console.error("绘制网格", this.width, this.height);
-    console.error("h / 2", h / 2);
+    // console.error("绘制网格", this.width, this.height);
+    // console.error("h / 2", h / 2);
 
     ctx.save();
     ctx.translate(state.scrollX, state.scrollY);
