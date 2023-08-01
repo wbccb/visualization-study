@@ -4,7 +4,7 @@ import {nanoid} from "nanoid";
 /**
  * 将BaseCanvas对象传入，使用BaseCanvas.xxx提供的通用方法进行业务开发
  */
-class Grid {
+class GridController {
   constructor(baseCanvas, options = {}) {
     this.baseCanvas = baseCanvas;
     this.options = options; // 包含网格的格子大小
@@ -170,4 +170,4 @@ class Grid {
   }
 }
 
-export default Grid;
+export default GridController;

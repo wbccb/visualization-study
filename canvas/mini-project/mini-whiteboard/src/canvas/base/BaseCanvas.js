@@ -37,7 +37,7 @@ class BaseCanvas extends EventListener {
     }
 
     // 所有绘制数据的管理，用于清除某一个数据进行重绘
-    this.elements = [];
+    this.elements = {};
 
     this.initListener();
   }
@@ -121,6 +121,11 @@ class BaseCanvas extends EventListener {
     this.ctx.clearRect(0, 0, this.width, this.height);
   }
 
+  clearAll() {
+    this.elements = {};
+    this.reRender();
+  }
+
   /**
    * 封装ctx一系列操作，增强代码复用
    */
@@ -195,16 +200,20 @@ class BaseCanvas extends EventListener {
 
   baseDrawDiamond(id, data) {
     const ctx = this.ctx;
+    const state = this.state;
     const {x, y, w, h} = data;
     ctx.save();
+    ctx.translate(state.scrollX, state.scrollY);
     ctx.strokeStyle = "red";
     ctx.lineWidth = "2px";
     ctx.beginPath();
-    ctx.moveTo(x + w / 2, y);
-    ctx.lineTo(x + w, y + h / 2);
-    ctx.lineTo(x + w / 2, y + h);
+    ctx.moveTo(x - w / 2, y);
     ctx.lineTo(x, y + h / 2);
+    ctx.lineTo(x + w / 2, y);
+    ctx.lineTo(x, y - h / 2);
+    ctx.lineTo(x - w / 2, y);
     ctx.closePath();
+    ctx.stroke();
     ctx.restore();
     this.saveItem(id, "baseDrawDiamond", {
       x,

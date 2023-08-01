@@ -1,11 +1,14 @@
 import BaseCanvas from "./base/BaseCanvas.js";
 import {nanoid} from "nanoid";
 import {throttle} from "./util/utils.js";
-
+export const Status = {
+  Rect: "绘制矩形",
+  Diamond: "绘制菱形",
+};
 /**
  * 将BaseCanvas对象传入，使用BaseCanvas.xxx提供的通用方法进行业务开发
  */
-class Main {
+class LocationController {
   constructor(baseCanvas, options = {}) {
     this.baseCanvas = baseCanvas;
 
@@ -51,7 +54,7 @@ class Main {
     };
 
     canvasDom.addEventListener("pointerdown", (e) => {
-      console.warn("Main pointerDown");
+      console.warn("LocationController pointerDown");
       canvasDom.addEventListener("pointermove", this.eventListenerPointerMove);
       canvasDom.addEventListener("pointerup", this.eventListenerPointerUp);
       this.onPointDown(e);
@@ -87,15 +90,25 @@ class Main {
     // if (Math.abs(w) + Math.abs(h) > 0) {
     // console.log("onPointMove!!!!!!!!");
     this.baseCanvas.deleteItem(this.startPointId);
-    this.baseCanvas.baseDrawRect(
+    let fn = this.baseCanvas.baseDrawRect;
+
+    switch (this.status) {
+      case Status.Rect:
+        fn = this.baseCanvas.baseDrawRect;
+        break;
+      case Status.Diamond:
+        fn = this.baseCanvas.baseDrawDiamond;
+        break;
+    }
+
+    fn.call(
+      this.baseCanvas,
       this.startPointId,
       {
         x: this.startPoint.x,
         y: this.startPoint.y,
         w,
         h,
-        scrollX: this.baseCanvas.state.scrollX,
-        scrollY: this.baseCanvas.state.scrollY,
       },
       true,
     );
@@ -114,6 +127,14 @@ class Main {
     canvasDom.addEventListener("pointermove", this.eventListenerPointerMove);
     canvasDom.addEventListener("pointerup", this.eventListenerPointerUp);
   }
+
+  changeStatus(status) {
+    this.status = status;
+  }
+
+  clearAll() {
+    this.baseCanvas.clearAll();
+  }
 }
 
-export default Main;
+export default LocationController;
