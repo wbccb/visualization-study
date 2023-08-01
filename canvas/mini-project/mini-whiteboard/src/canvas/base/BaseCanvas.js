@@ -148,8 +148,8 @@ class BaseCanvas extends EventListener {
     // 我去！！！你要记住一件事，你下面是要this.ctx.translate(state.scrollX, state.scrollY)
     // 因此你的rect可以恢复到没有scrollX的位置啊啊啊啊！！也就是x和y一直都不变！！！！！然后原点translate即可！！！啊啊啊啊
     // 其它也是这样啊！！！！无论如何滑动，绘制时的x和y都是一样的，我们只操作ctx.translate！！！
-    x = x + lastScrollX;
-    y = y + lastScrollY;
+    // x = x;
+    // y = y;
     // }
 
     // console.error("绘制矩形中x====", x, lastScrollX, state.scrollX);
@@ -173,11 +173,13 @@ class BaseCanvas extends EventListener {
     this.ctx.restore();
     // if (!isTouch) {
     // restore()了，存入的坐标恢复加上scrollX和scrollY
-    x = x - state.scrollX;
-    y = y - state.scrollY;
+    // x = x - state.scrollX;
+    // y = y - state.scrollY;
     // }
 
-    // 此时的x和y都是加上偏移量scrollX和scrollY的
+    // 此时的x和y都是相对坐标，无论如何偏移，x和y都是一样的
+    // 因为我们每次都ctx.translate(state.scrollX, state.scrollY)
+    // 因此不用考虑偏移量
     console.info("========");
     console.info(x, y, w, h, state.scrollX, state.scrollY);
 

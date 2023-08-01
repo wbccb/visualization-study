@@ -1,3 +1,5 @@
+import {ElMessage} from "element-plus";
+
 /**
  * 对触摸点的坐标进行转化，因为我们可能会移动画布，因此需要根据scroll进行canvas坐标的转化
  */
@@ -11,19 +13,18 @@ class Coordinate {
     // canvas可能不是以左上角开始绘制的，因此还得减去canvas的top和left
     const {x, y, top, left} = this.baseCanvas.getCanvasDom().getBoundingClientRect();
     const {offsetLeft, offsetTop} = this.baseCanvas.getCanvasDom();
-    // const {offsetLeft, offsetTop} = this.baseCanvas.getCanvasDom();
-    // canvas可能还会滑动，因此得减去scrollX和scrollY
 
-    // console.warn("=====================================");
-    // console.error("top", top, left);
-    // console.error("offsetLeft", offsetTop, offsetLeft);
-    // console.error("canvasScrollY", canvasScrollX, canvasScrollY);
-    // console.error("最终点击的canvas坐标", clientX - left, clientY - top);
-    // console.warn("=====================================");
+    const infoX = clientX - left - canvasScrollX;
+    const infoY = clientY - top - canvasScrollY;
+    // ElMessage.info({
+    //   message: "点击的坐标是" + infoX + "," + infoY,
+    // });
 
-    // console.error("offsetTop", offsetTop, offsetLeft);
+    // 经过调试可以知道！infoX和infoY计算出来的是相对坐标，也就是无论如何偏移！
+    // infoX和infoY的值都是一样的啊！！！！！
+    // 比如没有偏移时,x=100,y=100
+    // 偏移了，点击坐标系的(100, 100)得到的x和y也是(100, 100)
 
-    console.warn("----- getTouchEvent-----", canvasScrollX, canvasScrollY);
     return {
       x: clientX - left - canvasScrollX,
       y: clientY - top - canvasScrollY,
