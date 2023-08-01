@@ -4,11 +4,12 @@
       <el-alert :title="'当前状态:' + currentStatus" type="success" closable="true" />
     </div>
 
-    <el-button @click="resetScroll">点击恢复scroll</el-button>
+    <!--    <el-button @click="resetScroll">点击恢复scroll</el-button>-->
     <el-button @click="clearAll">全部清除</el-button>
 
-    <el-button @click="setStatus(Status.Rect)">切换为矩形绘制</el-button>
-    <el-button @click="setStatus(Status.Diamond)">切换为菱形绘制</el-button>
+    <template v-for="(item, index) in Status">
+      <el-button @click="setStatus(item)">切换为{{ item }}</el-button>
+    </template>
   </div>
   <div class="content" id="wrapper" ref="canvasWrapper">
     <canvas id="canvas"></canvas>
@@ -29,6 +30,7 @@ export default {
       init();
     });
 
+    const initStatus = Status.PEN;
     let main;
     function init() {
       const gridBaseCanvas = new BaseCanvas("canvas");
@@ -37,7 +39,7 @@ export default {
       });
 
       const mainBaseCanvas = new BaseCanvas("main");
-      main = new LocationController(mainBaseCanvas);
+      main = new LocationController(mainBaseCanvas, {status: initStatus});
 
       const domWrapper = document.getElementById("wrapper");
       // domWrapper.addEventListener("pointermove", (event) => {
@@ -55,7 +57,7 @@ export default {
       main.clearAll();
     };
 
-    const currentStatus = ref(Status.Rect);
+    const currentStatus = ref(initStatus);
     const setStatus = (status) => {
       main.changeStatus(status);
       currentStatus.value = status;

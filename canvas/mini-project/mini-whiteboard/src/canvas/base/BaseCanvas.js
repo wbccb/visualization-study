@@ -1,6 +1,7 @@
 import Coordinate from "./Coordinate.js";
 import {throttle} from "../util/utils.js";
 import EventListener from "../util/eventListener.js";
+import {nanoid} from "nanoid";
 
 /**
  * 封装通用方法，在这个类中进行canvas的初始化，然后将canvas传入到管理类中
@@ -112,8 +113,6 @@ class BaseCanvas extends EventListener {
     return this.height;
   }
 
-  getTouch() {}
-
   /**
    * 清除画布
    */
@@ -135,59 +134,19 @@ class BaseCanvas extends EventListener {
     this.ctx.save();
     const state = this.state;
 
-    //TODO 为什么可以不用translate，坐标就是对的？？？
-    // 答：saveItem()的时候我主动减去了scrollX!难道我这里拿到的x是有加上scrollX的？？
-    // 最终答：因为坐标原点没有变化！我现在滑动后，是将坐标系translate然后重绘制，每次重绘制后都会restore
-    // 因此我的坐标系的原点还是中央那个点！虽然我的画布偏移了！！！但是记住，我每次重绘制后都会restore
-    // 坐标系还是原点啊，因此我绘制矩形时，手指触碰的位置还是用 clientX-left，而不用加上scrollX！因为坐标系都没变化！
-
-    // if (!isTouch) {
-    console.warn("----- isTouch-----", lastScrollX !== state.scrollX);
-    console.warn("----- isTouch-----", lastScrollY !== state.scrollY);
-    // TODO 为啥去掉这一句就正常了？不去掉滑动时位置都重绘错误
-
-    // 我的想法是：减去上次的偏移量，加上这次的偏移量
-    // x = x + testSrollX - state.scrollX;
-    // y = y + lastScrollY - state.scrollY;
-
     // 我去！！！你要记住一件事，你下面是要this.ctx.translate(state.scrollX, state.scrollY)
     // 因此你的rect可以恢复到没有scrollX的位置啊啊啊啊！！也就是x和y一直都不变！！！！！然后原点translate即可！！！啊啊啊啊
     // 其它也是这样啊！！！！无论如何滑动，绘制时的x和y都是一样的，我们只操作ctx.translate！！！
-    // x = x;
-    // y = y;
-    // }
-
-    // console.error("绘制矩形中x====", x, lastScrollX, state.scrollX);
-    // console.info("绘制矩形中y====", y, lastScrollY, state.scrollY);
-    // console.warn("不停绘制的差值是", lastScrollY - state.scrollY);
-    // console.warn("不停绘制的差值是", data.scrollY - state.scrollY);
-
-    // Coordinate.js不减去scrollX和scrollY
-    // 这里不translate(scrollX, scrollY)
-    // 那么就一切正常！
-    console.warn("----- ctx.translate-----", x, y);
-    console.warn("----- ctx.translate-----", state.scrollX, state.scrollY);
-    console.warn("----- ctx.translate原点一直是-----", x + lastScrollX, y + lastScrollY);
 
     this.ctx.translate(state.scrollX, state.scrollY);
-
-    //TODO 那存储该如何存储？？不能存储没有scrollX的坐标吧？？
 
     this.ctx.strokeStyle = "blue";
     this.ctx.strokeRect(x, y, w, h);
     this.ctx.restore();
-    // if (!isTouch) {
-    // restore()了，存入的坐标恢复加上scrollX和scrollY
-    // x = x - state.scrollX;
-    // y = y - state.scrollY;
-    // }
 
     // 此时的x和y都是相对坐标，无论如何偏移，x和y都是一样的
     // 因为我们每次都ctx.translate(state.scrollX, state.scrollY)
     // 因此不用考虑偏移量
-    console.info("========");
-    console.info(x, y, w, h, state.scrollX, state.scrollY);
-
     this.saveItem(id, "baseDrawRect", {
       x,
       y,
@@ -223,15 +182,42 @@ class BaseCanvas extends EventListener {
     });
   }
 
-  getXYByScroll(x, y) {
-    const scrollX = this.state.scrollX;
-    const scrollY = this.state.scrollY;
+  setDrawPenStartPoint(data) {
+    this.penDataArray = data;
+  }
 
-    return [x + scrollX, y + scrollY];
-    // return {
-    //   x: x + scrollX,
-    //   y: y + scrollY,
-    // };
+  addDrawPenPoint(id, data) {
+    const {x, y} = data;
+    const len = this.penDataArray.length;
+    const [lastX, lastY] = this.penDataArray[len - 1];
+
+    const distance = Math.abs(x - lastX) + Math.abs(y - lastY);
+    if (distance > 5) {
+      // 稀释点位，不然会非常非常多，绘制的时候要时刻触发，不然会有闪闪的情况
+      // 虽然我们绘制的时候很多时候都是同样数据绘制一次，但是感官比较流畅
+      this.penDataArray.push([x, y]);
+    }
+    // 触发自由画笔绘制
+    this.baseDrawPen(id, this.penDataArray);
+  }
+
+  baseDrawPen(id, array) {
+    const [firstPointX, firstPointY] = array[0];
+    const ctx = this.ctx;
+
+    ctx.save();
+    ctx.strokeStyle = "green";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(firstPointX, firstPointY);
+    // 点效率太低，直接线
+    for (let i = 1; i < array.length; i++) {
+      const [x, y] = array[i];
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+    this.saveItem(id, "baseDrawPen", this.penDataArray);
   }
 
   deleteItem(id) {

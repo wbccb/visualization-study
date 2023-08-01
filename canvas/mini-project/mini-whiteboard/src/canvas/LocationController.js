@@ -1,10 +1,13 @@
 import BaseCanvas from "./base/BaseCanvas.js";
 import {nanoid} from "nanoid";
 import {throttle} from "./util/utils.js";
+
 export const Status = {
   Rect: "绘制矩形",
   Diamond: "绘制菱形",
+  PEN: "自由画笔",
 };
+
 /**
  * 将BaseCanvas对象传入，使用BaseCanvas.xxx提供的通用方法进行业务开发
  */
@@ -21,6 +24,8 @@ class LocationController {
     ctx.fillStyle = options.fillStyle ? options.fillStyle : "#dfe0e1";
 
     this.ctx = ctx;
+
+    this.status = options.status || Status.Rect;
     this.init();
     this.initListener();
   }
@@ -73,6 +78,11 @@ class LocationController {
     };
     this.startPointId = nanoid(); //=> "V1StGXR8_Z5jdHi6B-myT"
     console.error("新的id", this.startPointId);
+
+    if (this.status === Status.PEN) {
+      const item = [x, y];
+      this.baseCanvas.setDrawPenStartPoint([item]);
+    }
   }
 
   onPointMove(e) {
@@ -91,27 +101,36 @@ class LocationController {
     // console.log("onPointMove!!!!!!!!");
     this.baseCanvas.deleteItem(this.startPointId);
     let fn = this.baseCanvas.baseDrawRect;
-
+    let data;
     switch (this.status) {
       case Status.Rect:
         fn = this.baseCanvas.baseDrawRect;
+        data = {
+          x: this.startPoint.x,
+          y: this.startPoint.y,
+          w,
+          h,
+        };
         break;
       case Status.Diamond:
         fn = this.baseCanvas.baseDrawDiamond;
+        data = {
+          x: this.startPoint.x,
+          y: this.startPoint.y,
+          w,
+          h,
+        };
+        break;
+      case Status.PEN:
+        fn = this.baseCanvas.addDrawPenPoint;
+        data = {
+          x: canvasPoint.x,
+          y: canvasPoint.y,
+        };
         break;
     }
 
-    fn.call(
-      this.baseCanvas,
-      this.startPointId,
-      {
-        x: this.startPoint.x,
-        y: this.startPoint.y,
-        w,
-        h,
-      },
-      true,
-    );
+    fn.call(this.baseCanvas, this.startPointId, data, true);
     // }
   }
 
