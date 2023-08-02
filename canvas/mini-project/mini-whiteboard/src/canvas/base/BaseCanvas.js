@@ -204,10 +204,12 @@ class BaseCanvas extends EventListener {
   baseDrawPen(id, array) {
     const [firstPointX, firstPointY] = array[0];
     const ctx = this.ctx;
+    const state = this.state;
 
     ctx.save();
     ctx.strokeStyle = "green";
     ctx.lineWidth = 2;
+    ctx.translate(state.scrollX, state.scrollY);
     ctx.beginPath();
     ctx.moveTo(firstPointX, firstPointY);
     // 点效率太低，直接线
