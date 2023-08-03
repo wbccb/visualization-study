@@ -1,14 +1,20 @@
 <template>
   <div class="btn-wrapper">
     <div style="margin-bottom: 10px">
-      <el-alert :title="'当前状态:' + currentStatus" type="success" closable="true" />
+      <el-alert :title="'当前状态:' + currentStatus" type="success" />
     </div>
 
     <!--    <el-button @click="resetScroll">点击恢复scroll</el-button>-->
     <el-button @click="clearAll">全部清除</el-button>
 
     <template v-for="(item, index) in Status">
-      <el-button @click="setStatus(item)">切换为{{ item }}</el-button>
+      <el-button
+        :type="item === currentStatus ? 'danger' : 'default'"
+        :disabled="item === currentStatus"
+        @click="setStatus(item)"
+      >
+        {{ item === currentStatus ? "当前状态:" + item : "切换状态:" + item }}
+      </el-button>
     </template>
   </div>
   <div class="content" id="wrapper" ref="canvasWrapper">
@@ -30,7 +36,7 @@ export default {
       init();
     });
 
-    const initStatus = Status.PEN;
+    const initStatus = Status.TEXT;
     let main;
     function init() {
       const gridBaseCanvas = new BaseCanvas("canvas");

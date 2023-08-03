@@ -6,6 +6,7 @@ export const Status = {
   Rect: "绘制矩形",
   Diamond: "绘制菱形",
   PEN: "自由画笔",
+  TEXT: "多行文字",
 };
 
 /**
@@ -38,13 +39,12 @@ class LocationController {
     // pointermove：鼠标拖动计算出对应的位置，不断进行渲染，形成一种放大缩小的效果
     // pointerup: 绘制结束，注销两个事件
 
-    this.startDrawRect();
+    this.initPointerdownEvent();
   }
-
   /**
    * 需要一个触发时机，比如点击了某一个矩形触发绘制功能
    */
-  startDrawRect() {
+  initPointerdownEvent() {
     const fn = throttle(this.onPointMove);
     const canvasDom = this.baseCanvas.getCanvasDom();
 
@@ -82,6 +82,15 @@ class LocationController {
     if (this.status === Status.PEN) {
       const item = [x, y];
       this.baseCanvas.setDrawPenStartPoint([item]);
+    } else if (this.status === Status.TEXT) {
+      const {maxWidth, maxHeight} = this.baseCanvas.getTouchBoundaryMaxRect(e);
+      const data = {
+        x: x,
+        y: y,
+        w: maxWidth > 100 ? 100 : maxWidth,
+        h: maxHeight,
+      };
+      this.baseCanvas.baseStartDrawText(this.startPointId, data);
     }
   }
 
@@ -93,7 +102,7 @@ class LocationController {
     const w = canvasPoint.x - this.startPoint.x;
     const h = canvasPoint.y - this.startPoint.y;
 
-    console.log(w, h);
+    // console.log(w, h);
 
     // TODO 如何清除之前画的？
     // 每次清除都要进行重绘
@@ -128,6 +137,10 @@ class LocationController {
           y: canvasPoint.y,
         };
         break;
+      case Status.TEXT:
+        fn = () => {};
+        data = {};
+        break;
     }
 
     fn.call(this.baseCanvas, this.startPointId, data, true);
@@ -143,8 +156,8 @@ class LocationController {
     this.startPoint = undefined;
 
     const canvasDom = this.baseCanvas.getCanvasDom();
-    canvasDom.addEventListener("pointermove", this.eventListenerPointerMove);
-    canvasDom.addEventListener("pointerup", this.eventListenerPointerUp);
+    canvasDom.removeEventListener("pointermove", this.eventListenerPointerMove);
+    canvasDom.removeEventListener("pointerup", this.eventListenerPointerUp);
   }
 
   changeStatus(status) {

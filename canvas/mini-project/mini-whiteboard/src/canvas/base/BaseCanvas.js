@@ -1,7 +1,8 @@
-import Coordinate from "./Coordinate.js";
+import CoordinateHelper from "./CoordinateHelper.js";
 import {throttle} from "../util/utils.js";
 import EventListener from "../util/eventListener.js";
 import {nanoid} from "nanoid";
+import TextHelper from "./TextHelper.js";
 
 /**
  * 封装通用方法，在这个类中进行canvas的初始化，然后将canvas传入到管理类中
@@ -30,7 +31,8 @@ class BaseCanvas extends EventListener {
       scrollX: 0,
       scrollY: 0,
     };
-    this.coordinate = new Coordinate(this);
+    this.coordinateHelper = new CoordinateHelper(this);
+    this.textHelper = new TextHelper(this);
 
     if (isRenderImmediately) {
       //如果isRenderImmediately=false，那么renderCanvas可以在各自的管理类中进行管理
@@ -59,8 +61,6 @@ class BaseCanvas extends EventListener {
       // 滑动的同时要设置对应的
       // this.ctx.translate(this.state.scrollX, this.state.scrollY);
 
-      // console.info("最新的scrollX/scrollY", this.state.scrollX, this.state.scrollY);
-
       forceRender.call(this);
       this.emitEvent("wheelChange", {
         scrollX,
@@ -72,7 +72,11 @@ class BaseCanvas extends EventListener {
   getTouchCanvasPoint(event) {
     const scrollX = this.state.scrollX;
     const scrollY = this.state.scrollY;
-    return this.coordinate.getTouchCanvasPoint(event, scrollX, scrollY);
+    return this.coordinateHelper.getTouchCanvasPoint(event, scrollX, scrollY);
+  }
+
+  getTouchBoundaryMaxRect(event) {
+    return this.coordinateHelper.getTouchBoundaryMaxRect(event);
   }
 
   getCanvasDom() {
@@ -220,6 +224,46 @@ class BaseCanvas extends EventListener {
     }
     ctx.restore();
     this.saveItem(id, "baseDrawPen", this.penDataArray);
+  }
+
+  /**
+   * 开发步骤：
+   * 1. 实现基础功能
+   * 2. 进行架构设计
+   * 3. 完善架构中多行文本的处理
+   */
+  baseStartDrawText(id, data) {
+    const {x, y, w, h} = data;
+    const ctx = this.ctx;
+
+    this.textHelper.showTextArea(x, y, w, h, (textAreaValue) => {
+      // onblur时回调该方法，进行canvas的绘制
+      data.textAreaValue = textAreaValue;
+      this.baseDrawText(id, data);
+    });
+  }
+
+  // TODO 绘制文本
+  baseDrawText(id, data) {
+    const {x, y, w, h, textAreaValue} = data;
+    const ctx = this.ctx;
+    // 1.点击位置后，使用document.createElement("textArea")，然后根据点击的位置，设置width+height+border+innerText
+    // 2.还要判断是否是距离canvasWidth边缘地方，进行换行操作（在外部传入w和h时已经做判断了！）
+
+    // TODO 3.失去焦点后，我们要将textArea的内容绘制到canvas上面，使用context.fillText()
+
+    // TODO (这个放在后面选中做)4.再次点击时，检测是否命中该text，获取到该text的内容，然后放入到textArea中
+
+    ctx.save();
+    ctx.fillStyle = "black";
+    ctx.font = "12px";
+    ctx.textBaseline = "ideographic";
+    const value = textAreaValue;
+    // TODO 切割为多行文字，然后偏移y进行绘制
+    ctx.fillText(value, x, y);
+    ctx.restore();
+
+    this.saveItem(id, "baseDrawText", data);
   }
 
   deleteItem(id) {

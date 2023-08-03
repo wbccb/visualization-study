@@ -3,7 +3,7 @@ import {ElMessage} from "element-plus";
 /**
  * 对触摸点的坐标进行转化，因为我们可能会移动画布，因此需要根据scroll进行canvas坐标的转化
  */
-class Coordinate {
+class CoordinateHelper {
   constructor(baseCanvas) {
     this.baseCanvas = baseCanvas;
   }
@@ -31,9 +31,22 @@ class Coordinate {
     };
   }
 
+  getTouchBoundaryMaxRect(event) {
+    const {clientX, clientY} = event;
+    const {top, left} = this.baseCanvas.getCanvasDom().getBoundingClientRect();
+
+    const touchDx = clientX - left;
+    const touchDy = clientY - top;
+
+    return {
+      maxWidth: this.baseCanvas.width - touchDx,
+      maxHeight: this.baseCanvas.height - touchDy,
+    };
+  }
+
   getTouchX(event) {}
 
   getTouchY() {}
 }
 
-export default Coordinate;
+export default CoordinateHelper;
