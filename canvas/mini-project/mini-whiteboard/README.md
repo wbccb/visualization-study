@@ -57,18 +57,16 @@ y = y+scrollY
 
 ### 绘制文本
 
-- 输入框改变文本后如何位置不偏移地绘制到canvas上
-- 多行文本如何绘制
-- 绘制textarea的高度如何根据换行进行动态调整（自动调整高度）
-- 绘制textarea的宽度如何根据canvas的边缘进行调整（自动换行）
-- 复制黏贴文本时如何自动实现换行
-- wheel移动画板的时候如何移动textArea，直接失去焦点？进行绘制？
-
+- 输入框改变文本后如何位置后，使用统一的fontStyle以及textBaseline="top"进行canvas的绘制
+- 多行文本利用textArea+div的宽度比较进行换行符插入，然后利用换行符进行切割，利用y+lineHeight作为偏移量进行每一行文字的绘制
+- 绘制textarea的宽度根据div+textarea的宽度比较进行换行符的插入（自动换行）
+- 绘制textarea的高度根据换行符进行高度的lineHeight增加（自动调整高度）
+- wheel移动画板的时候直接让textarea失去焦点，进行绘制
+- （TODO）复制黏贴文本时如何自动实现换行
 
 
 ## 性能优化
 1. https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas
-2. 
 
 
 # 参考
