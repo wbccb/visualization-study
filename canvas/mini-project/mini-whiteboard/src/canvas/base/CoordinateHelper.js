@@ -39,8 +39,8 @@ class CoordinateHelper {
     const touchDy = clientY - top;
 
     return {
-      maxWidth: this.baseCanvas.width - touchDx,
-      maxHeight: this.baseCanvas.height - touchDy,
+      distanceToMaxX: this.baseCanvas.width - touchDx,
+      distanceToMaxY: this.baseCanvas.height - touchDy,
     };
   }
 

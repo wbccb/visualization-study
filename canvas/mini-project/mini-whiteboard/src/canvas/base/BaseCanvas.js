@@ -3,6 +3,7 @@ import {throttle} from "../util/utils.js";
 import EventListener from "../util/eventListener.js";
 import {nanoid} from "nanoid";
 import TextHelper from "./TextHelper.js";
+import {globalConfig} from "../config/config.js";
 
 /**
  * 封装通用方法，在这个类中进行canvas的初始化，然后将canvas传入到管理类中
@@ -48,6 +49,10 @@ class BaseCanvas extends EventListener {
     const forceRender = throttle(this.reRender, 0);
     // 注册滑动事件，由于有两个canvas，因此wheel事件注册在它们的parent上
     this.canvasDom.parentElement.addEventListener("wheel", (event) => {
+      if (document.activeElement && document.activeElement.tagName === "TEXTAREA") {
+        document.activeElement.blur();
+      }
+
       const {deltaX, deltaY} = event;
       const oldScrollX = this.state.scrollX;
       const oldScrollY = this.state.scrollY;
@@ -248,29 +253,27 @@ class BaseCanvas extends EventListener {
     return this.textHelper.isShowTextArea();
   }
 
-  // TODO 绘制文本
   baseDrawText(id, data) {
     const {x, y, w, h, textAreaValue, fontStyle} = data;
     const ctx = this.ctx;
     // 1.点击位置后，使用document.createElement("textArea")，然后根据点击的位置，设置width+height+border+innerText
     // 2.还要判断是否是距离canvasWidth边缘地方，进行换行操作（在外部传入w和h时已经做判断了！）
-
-    // TODO 3.失去焦点后，我们要将textArea的内容绘制到canvas上面，使用context.fillText()
+    // 3.失去焦点后，我们要将textArea的内容绘制到canvas上面，使用context.fillText()
 
     // TODO (这个放在后面选中做)4.再次点击时，检测是否命中该text，获取到该text的内容，然后放入到textArea中
 
     ctx.save();
+    ctx.translate(this.state.scrollX, this.state.scrollY);
 
     const keys = Object.keys(fontStyle);
     for (const key of keys) {
       ctx[key] = fontStyle[key];
     }
-    // ctx.fillStyle = fontStyle.fillStyle;
-    // ctx.font = fontStyle.font;
-    // ctx.textBaseline = fontStyle.textBaseline;
-    const value = textAreaValue;
-    // TODO 切割为多行文字，然后偏移y进行绘制
-    ctx.fillText(value, x, y);
+    const textArray = textAreaValue.split("\n");
+    for (let i = 0; i < textArray.length; i++) {
+      // 切割为多行文字，然后偏移y进行绘制
+      ctx.fillText(textArray[i], x, y + globalConfig.fontLineHeight * i);
+    }
     ctx.restore();
 
     this.saveItem(id, "baseDrawText", data);

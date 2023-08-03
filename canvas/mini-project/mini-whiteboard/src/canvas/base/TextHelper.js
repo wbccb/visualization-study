@@ -1,3 +1,5 @@
+import {globalConfig} from "../config/config.js";
+
 /**
  * 封装所有对文本的操作逻辑，包括
  * 1. 多行文本绘制
@@ -22,28 +24,15 @@ class TextHelper {
     return this.textAreaDom.style.display !== "none";
   }
 
-  showTextArea(x, y, width, height, blurCallBack) {
+  showTextArea(x, y, textAreaWidth, textAreaHeight, blurCallBack) {
     const textAreaDom = this.textAreaDom;
-
-    // console.info("最新的scrollX/scrollY", this.state.scrollX, this.state.scrollY);
-    // const style = {
-    //   display: "block",
-    //   x: x + "px",
-    //   y: y + "px",
-    //   width,
-    //   height,
-    //   border: "1px solid black",
-    //   zIndex: "101",
-    // };
-    // const initStyle = textAreaDom.style;
-    // textAreaDom.style = Object.assign(initStyle, style);
 
     textAreaDom.style.display = "block";
     textAreaDom.style.position = "absolute";
     textAreaDom.style.left = x + "px";
     textAreaDom.style.top = y + "px";
-    textAreaDom.style.width = width;
-    textAreaDom.style.height = height;
+    textAreaDom.style.width = textAreaWidth + "px";
+    textAreaDom.style.height = textAreaHeight + "px";
 
     textAreaDom.style.border = "1px solid black";
     textAreaDom.style.zIndex = "101";
@@ -56,34 +45,51 @@ class TextHelper {
     // family: 设置字体系列
     // 只需要改变这里的fontStyle就可以改变输入框和所有canvas绘制文本的样式
     const fontStyle = {
-      font: "normal normal bold 12px arial,serif",
+      font: `normal normal bold 12px/${globalConfig.fontLineHeightString} arial,serif`,
       fillStyle: "red",
       textBaseline: "top",
     };
     textAreaDom.style.font = fontStyle.font;
-    textAreaDom.style.color = fontStyle.textBaseline;
+    textAreaDom.style.color = fontStyle.fillStyle;
 
-    const divDom = this.createTextAreaDiv();
+    let divDom = this.createTextAreaDiv();
 
     textAreaDom.oninput = (e) => {
-      const textAreaValue = e.target.value;
+      let textAreaValue = e.target.value;
       divDom.innerText = textAreaValue;
       console.info(JSON.stringify(textAreaValue));
-      // TODO 判断是否需要换行
+      // 判断是否需要换行
+      // 超过div的距离就代表需要自动换行，插入换行符，textArea一旦超过width就会自动换行
+      // 但是我们需要手动插入换行符，因为我们canvas绘制的时候需要利用换行符进行文字的切割
+      const divWidth = divDom.getBoundingClientRect().width;
+
+      if (divWidth > textAreaWidth) {
+        console.info("divWidth", divWidth, textAreaWidth);
+        // 需要插入换行符，然后divWidth就会恢复到限定宽度的样子
+        // 可以继续输入，然后检测divWidth是否超过限定宽度
+        // 我们知道divWidth已经大于textAreaWidth，那我们该在哪个地方插入"\n"才能使得divWidth<textAreaWidth呢？
+        // 一个字是12px，我们从最后一个字之前插入"\n"，divWidth整体宽度会减少12px
+        const len = textAreaValue.length;
+        const newTextAreaValue =
+          textAreaValue.slice(0, len - 1) + "\n" + textAreaValue.slice(len - 1);
+        textAreaDom.style.height = parseInt(textAreaDom.style.height.split("px")[0]) + 20 + "px";
+        textAreaDom.value = newTextAreaValue; // 再度触发textAreaDom.oninput
+      }
     };
 
     textAreaDom.onblur = () => {
       if (divDom) {
         const canvasDom = this.baseCanvas.getCanvasDom();
         canvasDom.parentElement.removeChild(divDom);
+        divDom = null;
       }
 
       console.warn("fontStyle", fontStyle);
       blurCallBack && blurCallBack(textAreaDom.value, fontStyle);
       textAreaDom.style.display = "none";
       setTimeout(() => {
-        textAreaDom.innerText = "";
-      }, 1000);
+        textAreaDom.value = "";
+      }, 0);
     };
 
     setTimeout(() => {
@@ -105,10 +111,11 @@ class TextHelper {
     divDom.style.top = "0px";
     divDom.style.left = "0px";
     divDom.style.background = "red";
-
-    // TODO 测试使用
     const canvasDom = this.baseCanvas.getCanvasDom();
     canvasDom.parentElement.appendChild(divDom);
+
+    // TODO 测试使用
+    divDom.style.opacity = 0;
 
     return divDom;
   }

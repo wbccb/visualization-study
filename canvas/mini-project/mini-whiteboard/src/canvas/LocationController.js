@@ -1,6 +1,7 @@
 import BaseCanvas from "./base/BaseCanvas.js";
 import {nanoid} from "nanoid";
 import {throttle} from "./util/utils.js";
+import {globalConfig} from "./config/config.js";
 
 export const Status = {
   Rect: "绘制矩形",
@@ -93,13 +94,14 @@ class LocationController {
         }, 0);
         return;
       }
-      const {maxWidth, maxHeight} = this.baseCanvas.getTouchBoundaryMaxRect(e);
+      const {distanceToMaxX, distanceToMaxY} = this.baseCanvas.getTouchBoundaryMaxRect(e);
       const data = {
         x: x,
         y: y,
-        w: maxWidth > 100 ? 100 : maxWidth,
-        h: maxHeight,
+        w: distanceToMaxX >= 100 ? 100 : distanceToMaxX - 10, // 如果distanceToMaxX很小，说明距离边界很近
+        h: globalConfig.fontLineHeight, // lineHeight的高度
       };
+      console.info("绘制文本的宽高", data.w, data.h);
       this.baseCanvas.baseStartDrawText(this.startPointId, data, () => {
         // 结束绘制文本
         this.onPointUp();
