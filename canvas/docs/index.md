@@ -8,6 +8,6 @@ hero:
   actions:
     - theme: brand
       text: 正文内容
-      link: /1-base/quick-start
+      link: /1-base/0-quick-start
 ---
 

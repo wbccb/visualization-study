@@ -54,20 +54,12 @@ x = x+scrollX
 y = y+scrollY
 ```
 
-### 绝对定位会导致wheel事件无法触发
+### 绘制文本
 
-去掉下面的`position: absolute`即可触发
+- 输入框改变文本后如何位置不偏移地绘制到canvas上
+- 
 
-```css
-#canvas, #main {
-    width: 600px;
-    height: 600px;
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    overflow: scroll;
-}
-```
+
 
 ## 性能优化
 1. https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas

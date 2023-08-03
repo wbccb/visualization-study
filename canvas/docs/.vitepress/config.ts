@@ -16,12 +16,8 @@ export default defineConfig({
         items: [
           { text: '基础知识', link: '/1-base/0-quick-start' },
           { text: '着色', link: '/1-base/1-color' },
-        ]
-      },
-      {
-        text: '性能优化',
-        items: [
-          { text: 'Markdown Examples', link: '/markdown-examples' },
+          { text: '文本', link: '/1-base/2-text' },
+          { text: 'image', link: '/1-base/3-image' },
         ]
       }
     ],
