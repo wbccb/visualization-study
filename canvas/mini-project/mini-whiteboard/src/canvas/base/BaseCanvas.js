@@ -9,7 +9,7 @@ import TextHelper from "./TextHelper.js";
  * 宽度和高度由domId的css对应的width和height控制
  */
 class BaseCanvas extends EventListener {
-  constructor(domId, isRenderImmediately = true) {
+  constructor(domId, isGrid = false) {
     super(domId);
     // 外部传入的canvas，为了所有元素都绘制在同一个canvas上面
     const canvasDom = document.getElementById(domId);
@@ -32,12 +32,11 @@ class BaseCanvas extends EventListener {
       scrollY: 0,
     };
     this.coordinateHelper = new CoordinateHelper(this);
-    this.textHelper = new TextHelper(this);
-
-    if (isRenderImmediately) {
-      //如果isRenderImmediately=false，那么renderCanvas可以在各自的管理类中进行管理
-      this.renderCanvas();
+    if (!isGrid) {
+      this.textHelper = new TextHelper(this);
     }
+
+    this.renderCanvas();
 
     // 所有绘制数据的管理，用于清除某一个数据进行重绘
     this.elements = {};
@@ -236,9 +235,10 @@ class BaseCanvas extends EventListener {
     const {x, y, w, h} = data;
     const ctx = this.ctx;
 
-    this.textHelper.showTextArea(x, y, w, h, (textAreaValue) => {
+    this.textHelper.showTextArea(x, y, w, h, (textAreaValue, fontStyle) => {
       // onblur时回调该方法，进行canvas的绘制
       data.textAreaValue = textAreaValue;
+      data.fontStyle = fontStyle;
       this.baseDrawText(id, data);
       finishDrawTextFn && finishDrawTextFn();
     });
@@ -250,7 +250,7 @@ class BaseCanvas extends EventListener {
 
   // TODO 绘制文本
   baseDrawText(id, data) {
-    const {x, y, w, h, textAreaValue} = data;
+    const {x, y, w, h, textAreaValue, fontStyle} = data;
     const ctx = this.ctx;
     // 1.点击位置后，使用document.createElement("textArea")，然后根据点击的位置，设置width+height+border+innerText
     // 2.还要判断是否是距离canvasWidth边缘地方，进行换行操作（在外部传入w和h时已经做判断了！）
@@ -260,9 +260,14 @@ class BaseCanvas extends EventListener {
     // TODO (这个放在后面选中做)4.再次点击时，检测是否命中该text，获取到该text的内容，然后放入到textArea中
 
     ctx.save();
-    ctx.fillStyle = "black";
-    ctx.font = "12px";
-    ctx.textBaseline = "ideographic";
+
+    const keys = Object.keys(fontStyle);
+    for (const key of keys) {
+      ctx[key] = fontStyle[key];
+    }
+    // ctx.fillStyle = fontStyle.fillStyle;
+    // ctx.font = fontStyle.font;
+    // ctx.textBaseline = fontStyle.textBaseline;
     const value = textAreaValue;
     // TODO 切割为多行文字，然后偏移y进行绘制
     ctx.fillText(value, x, y);

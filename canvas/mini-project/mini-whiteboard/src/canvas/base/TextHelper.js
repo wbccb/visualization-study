@@ -48,6 +48,21 @@ class TextHelper {
     textAreaDom.style.border = "1px solid black";
     textAreaDom.style.zIndex = "101";
 
+    // font="[style variant weight size/lineHeight family] or [reserved word]"
+    // style: 正常 斜体 倾斜
+    // variant: 属性设置或返回是否以小型大写字母显示字体,这意味着所有的小写字母将被转换为大写，但相比其余文本，该字母将是较小的字体尺寸
+    // weight: 设置字体粗细
+    // size: 设置字体尺寸
+    // family: 设置字体系列
+    // 只需要改变这里的fontStyle就可以改变输入框和所有canvas绘制文本的样式
+    const fontStyle = {
+      font: "normal normal bold 12px arial,serif",
+      fillStyle: "red",
+      textBaseline: "top",
+    };
+    textAreaDom.style.font = fontStyle.font;
+    textAreaDom.style.color = fontStyle.textBaseline;
+
     const divDom = this.createTextAreaDiv();
 
     textAreaDom.oninput = (e) => {
@@ -63,7 +78,8 @@ class TextHelper {
         canvasDom.parentElement.removeChild(divDom);
       }
 
-      blurCallBack && blurCallBack(textAreaDom.value);
+      console.warn("fontStyle", fontStyle);
+      blurCallBack && blurCallBack(textAreaDom.value, fontStyle);
       textAreaDom.style.display = "none";
       setTimeout(() => {
         textAreaDom.innerText = "";

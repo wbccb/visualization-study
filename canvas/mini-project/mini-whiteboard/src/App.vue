@@ -39,7 +39,7 @@ export default {
     const initStatus = Status.TEXT;
     let main;
     function init() {
-      const gridBaseCanvas = new BaseCanvas("canvas");
+      const gridBaseCanvas = new BaseCanvas("canvas", true);
       const grid = new GridController(gridBaseCanvas, {
         size: 20,
       });
