@@ -18,6 +18,10 @@ class TextHelper {
     this.textAreaDom = textAreaDom;
   }
 
+  isShowTextArea() {
+    return this.textAreaDom.style.display !== "none";
+  }
+
   showTextArea(x, y, width, height, blurCallBack) {
     const textAreaDom = this.textAreaDom;
 

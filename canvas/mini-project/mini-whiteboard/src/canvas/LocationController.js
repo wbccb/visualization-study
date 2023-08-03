@@ -60,13 +60,14 @@ class LocationController {
 
     canvasDom.addEventListener("pointerdown", (e) => {
       console.warn("LocationController pointerDown");
-      canvasDom.addEventListener("pointermove", this.eventListenerPointerMove);
-      canvasDom.addEventListener("pointerup", this.eventListenerPointerUp);
       this.onPointDown(e);
     });
   }
 
   onPointDown(e) {
+    const canvasDom = this.baseCanvas.getCanvasDom();
+    canvasDom.addEventListener("pointermove", this.eventListenerPointerMove);
+    canvasDom.addEventListener("pointerup", this.eventListenerPointerUp);
     // getTouchCanvasPoint()不加scrollX和scrollY
     const canvasPoint = this.baseCanvas.getTouchCanvasPoint(e);
     console.log("pointerdown!!!!!!!!");
@@ -83,6 +84,15 @@ class LocationController {
       const item = [x, y];
       this.baseCanvas.setDrawPenStartPoint([item]);
     } else if (this.status === Status.TEXT) {
+      if (this.baseCanvas.isShowTextArea()) {
+        // 当前正在绘制文本，你又点击触发了一次文本绘制
+        // 延迟触发下一次绘制，先触发onBlur进行文本绘制，然后再触发你这次的文本绘制
+        this.onPointUp();
+        setTimeout(() => {
+          this.onPointDown(e);
+        }, 0);
+        return;
+      }
       const {maxWidth, maxHeight} = this.baseCanvas.getTouchBoundaryMaxRect(e);
       const data = {
         x: x,
@@ -90,7 +100,10 @@ class LocationController {
         w: maxWidth > 100 ? 100 : maxWidth,
         h: maxHeight,
       };
-      this.baseCanvas.baseStartDrawText(this.startPointId, data);
+      this.baseCanvas.baseStartDrawText(this.startPointId, data, () => {
+        // 结束绘制文本
+        this.onPointUp();
+      });
     }
   }
 
@@ -149,7 +162,6 @@ class LocationController {
 
   onPointUp(e) {
     // TODO 监听鼠标滑动的事件
-    const canvasPoint = this.baseCanvas.getTouchCanvasPoint(e);
     console.log("pointerup!!!!!!!!");
 
     this.startPointId = undefined;

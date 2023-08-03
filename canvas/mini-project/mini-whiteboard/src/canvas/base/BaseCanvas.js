@@ -232,7 +232,7 @@ class BaseCanvas extends EventListener {
    * 2. 进行架构设计
    * 3. 完善架构中多行文本的处理
    */
-  baseStartDrawText(id, data) {
+  baseStartDrawText(id, data, finishDrawTextFn) {
     const {x, y, w, h} = data;
     const ctx = this.ctx;
 
@@ -240,7 +240,12 @@ class BaseCanvas extends EventListener {
       // onblur时回调该方法，进行canvas的绘制
       data.textAreaValue = textAreaValue;
       this.baseDrawText(id, data);
+      finishDrawTextFn && finishDrawTextFn();
     });
+  }
+
+  isShowTextArea() {
+    return this.textHelper.isShowTextArea();
   }
 
   // TODO 绘制文本
