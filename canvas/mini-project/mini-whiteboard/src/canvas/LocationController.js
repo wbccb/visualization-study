@@ -3,6 +3,7 @@ import {nanoid} from "nanoid";
 import {throttle} from "./util/utils.js";
 import {EventType, globalConfig} from "./config/config.js";
 import EventListener from "./util/eventListener.js";
+import {ElMessage} from "element-plus";
 
 export const Status = {
   NO: "无状态",
@@ -112,9 +113,17 @@ class LocationController extends EventListener {
         this.onPointUp();
       });
     } else if (this.status === Status.IMAGE) {
-      return;
+      if (this.drawImageFirstClick) {
+        this.drawImageFirstClick = false;
+        return;
+      }
+
       // 点击时将图片绘制到canvas上，没点击之前是可以进行拖动的
       const imageData = this.baseCanvas.getBase64Image();
+      if (!imageData) {
+        alert("图片为空");
+        return;
+      }
       const data = {
         x: x,
         y: y,
@@ -125,6 +134,8 @@ class LocationController extends EventListener {
       // 停止监听
       this.baseCanvas.canvasDom.removeEventListener("pointermove", this.eventListenerPointerMove);
       this.baseCanvas.canvasDom.removeEventListener("pointerup", this.eventListenerPointerUp);
+      // 取消目前的图片选中状态
+      this.emit(EventType.STATUS_CHANGE);
     }
   }
 
@@ -141,10 +152,9 @@ class LocationController extends EventListener {
 
     // TODO 如何清除之前画的？
     // 每次清除都要进行重绘
-    // if (Math.abs(w) + Math.abs(h) > 0) {
     console.log("onPointMove!!!!!!!!");
     this.baseCanvas.deleteItem(this.startPointId);
-    let fn = this.baseCanvas.baseDrawRect;
+    let fn;
     let data;
     switch (this.status) {
       case Status.Rect:
@@ -188,8 +198,10 @@ class LocationController extends EventListener {
         break;
     }
 
+    if (!fn) {
+      return;
+    }
     fn.call(this.baseCanvas, this.startPointId, data, true);
-    // }
   }
 
   onPointUp(e) {
@@ -211,14 +223,9 @@ class LocationController extends EventListener {
 
     if (status === Status.IMAGE) {
       // TODO 不能单纯监听canvas事件，必须扩大范围
-      this.baseCanvas.canvasDom.parentElement.addEventListener(
-        "pointermove",
-        this.eventListenerPointerMove,
-      );
-      this.baseCanvas.canvasDom.parentElement.addEventListener(
-        "pointerup",
-        this.eventListenerPointerUp,
-      );
+      this.baseCanvas.canvasDom.addEventListener("pointermove", this.eventListenerPointerMove);
+      this.baseCanvas.canvasDom.addEventListener("pointerup", this.eventListenerPointerUp);
+      this.drawImageFirstClick = true;
 
       this.baseCanvas.baseStartDrawImage(() => {
         // 取消图片触发的回调

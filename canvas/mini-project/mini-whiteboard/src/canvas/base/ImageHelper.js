@@ -42,8 +42,8 @@ class ImageHelper {
 
     const divDom = document.createElement("div");
     divDom.style.position = "absolute";
-    divDom.style.left = 0;
-    divDom.style.top = 0;
+    divDom.style.left = "-100px";
+    divDom.style.top = "-100px";
     divDom.style.zIndex = 102;
     divDom.style.width = "100px";
     divDom.style.height = "100px";
@@ -60,8 +60,8 @@ class ImageHelper {
   }
 
   updateDraggingPosition(x, y) {
-    this.draggingElement.style.left = x + "px";
-    this.draggingElement.style.top = y + "px";
+    this.draggingElement.style.left = x + 5 + "px";
+    this.draggingElement.style.top = y + 5 + "px";
   }
 
   removeDraggingElement() {
@@ -69,9 +69,10 @@ class ImageHelper {
       return;
     }
     const canvasDom = this.baseCanvas.canvasDom;
-    canvasDom.removeChild(this.draggingElement);
+    canvasDom.parentElement.removeChild(this.draggingElement);
 
     this.draggingElement = null;
+    this.draggingElementBase64 = null;
   }
 
   async getImageUrl(file) {
