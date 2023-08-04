@@ -63,7 +63,42 @@ class TextHelper {
       // 但是我们需要手动插入换行符，因为我们canvas绘制的时候需要利用换行符进行文字的切割
       const divWidth = divDom.getBoundingClientRect().width;
 
-      if (divWidth > textAreaWidth) {
+      // 一般输入的话，都是一个一个字输入，假设超过24px的距离就是复制黏贴，但是复制黏贴会突然width增大很多
+      if (divWidth > textAreaWidth + 24) {
+        // 复制黏贴
+        const lineArray = textAreaValue.split("\n");
+        let handleTextAreaValueArray = [];
+        for (let i = 0; i < lineArray.length; i++) {
+          const line = lineArray[i];
+          // 利用div去计算行的宽度
+          divDom.innerText = line;
+          let lineWidth = divDom.getBoundingClientRect().width;
+          if (lineWidth <= textAreaWidth) {
+            handleTextAreaValueArray.push(line + "\n");
+          } else {
+            // line需要再切割
+            let lastIndex = 0;
+            for (let j = 1; j < line.length; j++) {
+              const currentLineText = line.slice(lastIndex, j);
+              divDom.innerText = currentLineText;
+              let lineWidth = divDom.getBoundingClientRect().width;
+              if (lineWidth > textAreaWidth) {
+                // 如果超过了area的宽度，进行切割和插入换行符
+                handleTextAreaValueArray.push(currentLineText + "\n");
+                lastIndex = j;
+              }
+
+              if (j === line.height - 1 && currentLineText) {
+                handleTextAreaValueArray.push(currentLineText);
+              }
+            }
+
+            const newTextAreaValue = handleTextAreaValueArray.join("");
+            textAreaDom.value = newTextAreaValue;
+          }
+        }
+      } else if (divWidth > textAreaWidth) {
+        // 普通输入超过一行的限制宽度
         console.info("divWidth", divWidth, textAreaWidth);
         // 需要插入换行符，然后divWidth就会恢复到限定宽度的样子
         // 可以继续输入，然后检测divWidth是否超过限定宽度
