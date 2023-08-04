@@ -4,7 +4,7 @@ class EventListener {
     this.id = id;
   }
 
-  onEvent(type, fn) {
+  on(type, fn) {
     if (!this.callback[type]) {
       this.callback[type] = [fn];
     } else {
@@ -12,7 +12,7 @@ class EventListener {
     }
   }
 
-  emitEvent(type, data) {
+  emit(type, data) {
     if (this.callback[type]) {
       const fnArray = this.callback[type];
       for (const fn of fnArray) {

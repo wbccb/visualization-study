@@ -1,20 +1,24 @@
 import BaseCanvas from "./base/BaseCanvas.js";
 import {nanoid} from "nanoid";
 import {throttle} from "./util/utils.js";
-import {globalConfig} from "./config/config.js";
+import {EventType, globalConfig} from "./config/config.js";
+import EventListener from "./util/eventListener.js";
 
 export const Status = {
+  NO: "无状态",
   Rect: "绘制矩形",
   Diamond: "绘制菱形",
   PEN: "自由画笔",
   TEXT: "多行文字",
+  IMAGE: "点击上传图片并绘制",
 };
 
 /**
  * 将BaseCanvas对象传入，使用BaseCanvas.xxx提供的通用方法进行业务开发
  */
-class LocationController {
+class LocationController extends EventListener {
   constructor(baseCanvas, options = {}) {
+    super();
     this.baseCanvas = baseCanvas;
 
     this.width = baseCanvas.width;
@@ -42,6 +46,7 @@ class LocationController {
 
     this.initPointerdownEvent();
   }
+
   /**
    * 需要一个触发时机，比如点击了某一个矩形触发绘制功能
    */
@@ -106,10 +111,25 @@ class LocationController {
         // 结束绘制文本
         this.onPointUp();
       });
+    } else if (this.status === Status.IMAGE) {
+      return;
+      // 点击时将图片绘制到canvas上，没点击之前是可以进行拖动的
+      const imageData = this.baseCanvas.getBase64Image();
+      const data = {
+        x: x,
+        y: y,
+        imageData: imageData,
+      };
+      this.baseCanvas.baseDrawImage(this.startPointId, data);
+
+      // 停止监听
+      this.baseCanvas.canvasDom.removeEventListener("pointermove", this.eventListenerPointerMove);
+      this.baseCanvas.canvasDom.removeEventListener("pointerup", this.eventListenerPointerUp);
     }
   }
 
   onPointMove(e) {
+    e.preventDefault();
     const ctx = this.ctx;
     // TODO 监听鼠标滑动的事件
     const canvasPoint = this.baseCanvas.getTouchCanvasPoint(e);
@@ -122,7 +142,7 @@ class LocationController {
     // TODO 如何清除之前画的？
     // 每次清除都要进行重绘
     // if (Math.abs(w) + Math.abs(h) > 0) {
-    // console.log("onPointMove!!!!!!!!");
+    console.log("onPointMove!!!!!!!!");
     this.baseCanvas.deleteItem(this.startPointId);
     let fn = this.baseCanvas.baseDrawRect;
     let data;
@@ -156,6 +176,16 @@ class LocationController {
         fn = () => {};
         data = {};
         break;
+      case Status.IMAGE:
+        fn = (id, data) => {
+          const {x, y} = data;
+          this.baseCanvas.baseUpdateDrawImage(x, y);
+        };
+        data = {
+          x: canvasPoint.x,
+          y: canvasPoint.y,
+        };
+        break;
     }
 
     fn.call(this.baseCanvas, this.startPointId, data, true);
@@ -172,10 +202,29 @@ class LocationController {
     const canvasDom = this.baseCanvas.getCanvasDom();
     canvasDom.removeEventListener("pointermove", this.eventListenerPointerMove);
     canvasDom.removeEventListener("pointerup", this.eventListenerPointerUp);
+
+    // TODO 后期应该设计成点击某一个就为某一种状态，然后绘制成功后就恢复到没有状态的情况
   }
 
   changeStatus(status) {
     this.status = status;
+
+    if (status === Status.IMAGE) {
+      // TODO 不能单纯监听canvas事件，必须扩大范围
+      this.baseCanvas.canvasDom.parentElement.addEventListener(
+        "pointermove",
+        this.eventListenerPointerMove,
+      );
+      this.baseCanvas.canvasDom.parentElement.addEventListener(
+        "pointerup",
+        this.eventListenerPointerUp,
+      );
+
+      this.baseCanvas.baseStartDrawImage(() => {
+        // 取消图片触发的回调
+        this.emit(EventType.STATUS_CHANGE);
+      });
+    }
   }
 
   clearAll() {

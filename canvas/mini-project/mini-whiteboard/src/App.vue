@@ -29,6 +29,7 @@ import GridController from "./canvas/GridController.js";
 import LocationController from "./canvas/LocationController.js";
 import BaseCanvas from "./canvas/base/BaseCanvas.js";
 import {Status} from "./canvas/LocationController.js";
+import {EventType} from "./canvas/config/config.js";
 
 export default {
   setup() {
@@ -46,6 +47,9 @@ export default {
 
       const mainBaseCanvas = new BaseCanvas("main");
       main = new LocationController(mainBaseCanvas, {status: initStatus});
+      main.on(EventType.STATUS_CHANGE, () => {
+        setStatus(Status.NO);
+      });
 
       const domWrapper = document.getElementById("wrapper");
       // domWrapper.addEventListener("pointermove", (event) => {

@@ -4,6 +4,7 @@ import EventListener from "../util/eventListener.js";
 import {nanoid} from "nanoid";
 import TextHelper from "./TextHelper.js";
 import {globalConfig} from "../config/config.js";
+import ImageHelper from "./ImageHelper.js";
 
 /**
  * 封装通用方法，在这个类中进行canvas的初始化，然后将canvas传入到管理类中
@@ -35,6 +36,7 @@ class BaseCanvas extends EventListener {
     this.coordinateHelper = new CoordinateHelper(this);
     if (!isGrid) {
       this.textHelper = new TextHelper(this);
+      this.imageHelper = new ImageHelper(this);
     }
 
     this.renderCanvas();
@@ -66,7 +68,7 @@ class BaseCanvas extends EventListener {
       // this.ctx.translate(this.state.scrollX, this.state.scrollY);
 
       forceRender.call(this);
-      this.emitEvent("wheelChange", {
+      this.emit("wheelChange", {
         scrollX,
         scrollY,
       });
@@ -230,12 +232,7 @@ class BaseCanvas extends EventListener {
     this.saveItem(id, "baseDrawPen", this.penDataArray);
   }
 
-  /**
-   * 开发步骤：
-   * 1. 实现基础功能
-   * 2. 进行架构设计
-   * 3. 完善架构中多行文本的处理
-   */
+  // ---------------------------- 文本 ----------------------------
   baseStartDrawText(id, data, finishDrawTextFn) {
     const {x, y, w, h} = data;
     const ctx = this.ctx;
@@ -277,6 +274,49 @@ class BaseCanvas extends EventListener {
     ctx.restore();
 
     this.saveItem(id, "baseDrawText", data);
+  }
+  // ---------------------------- 文本 ----------------------------
+
+  getBase64Image() {
+    return this.imageHelper.getBase64Image();
+  }
+
+  /**
+   * 点击按钮触发选择图片以及可以拖拽图片
+   */
+  baseStartDrawImage(cancelCallBack) {
+    this.imageHelper.selectImage(() => {
+      cancelCallBack && cancelCallBack();
+    });
+  }
+
+  baseUpdateDrawImage(x, y) {
+    this.imageHelper.updateDraggingPosition(x, y);
+  }
+
+  /**
+   * 点击canvas触发绘制图片
+   */
+  baseDrawImage(id, data) {
+    const {x, y, imageData} = data;
+    // 拿到目前imageHelper持有的image数据(从外部传入，这样saveItem才能保存)
+    // 将数据绘制到canvas上
+    const ctx = this.ctx;
+
+    ctx.save();
+    ctx.translate(this.state.scrollX, this.state.scrollY);
+    const image = new Image();
+    image.width = 100;
+    image.height = 100;
+    image.src = imageData;
+    ctx.drawImage(image, x, y);
+    ctx.restore();
+
+    this.imageHelper.removeDraggingElement();
+
+    // 移除imageHelper持有的DOM对象
+    // 缓存数据
+    this.saveItem(id, "baseDrawImage", data);
   }
 
   deleteItem(id) {

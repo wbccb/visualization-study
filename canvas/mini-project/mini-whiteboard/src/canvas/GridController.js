@@ -17,7 +17,7 @@ class GridController {
     ctx.lineWidth = 1;
     ctx.strokeStyle = "#dfe0e1";
 
-    this.baseCanvas.onEvent("wheelChange", ({scrollX, scrollY}) => {
+    this.baseCanvas.on("wheelChange", ({scrollX, scrollY}) => {
       this.render();
     });
 
