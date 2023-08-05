@@ -3,8 +3,9 @@ import {throttle} from "../util/utils.js";
 import EventListener from "../util/eventListener.js";
 import {nanoid} from "nanoid";
 import TextHelper from "./TextHelper.js";
-import {EventType, globalConfig} from "../config/config.js";
+import {EventType, globalConfig, HTMLEventType} from "../config/config.js";
 import ImageHelper from "./ImageHelper.js";
+import {containsPoint} from "../util/algorithm.js";
 
 /**
  * 封装通用方法，在这个类中进行canvas的初始化，然后将canvas传入到管理类中
@@ -76,6 +77,50 @@ class BaseCanvas extends EventListener {
         scrollX,
         scrollY,
       });
+    });
+
+    this.canvasDom.addEventListener(HTMLEventType.mousemove, (e) => {
+      const point = this.getTouchCanvasPoint(e);
+
+      // 遍历所有this.elements
+      for (const id in this.elements) {
+        const {type, data: sourceData} = this.elements[id];
+        // TODO 逻辑未完善，主要是针对不同类型的计算对应的宽高，比如自由画笔的宽高等等
+        let data = sourceData;
+        if (type === "baseDrawPen") {
+          let maxX = Number.MIN_SAFE_INTEGER;
+          let maxY = Number.MIN_SAFE_INTEGER;
+          let minX = Number.MAX_VALUE;
+          let minY = Number.MAX_SAFE_INTEGER;
+          for (const item of sourceData) {
+            const [x, y] = item;
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+          }
+          data = {};
+          data.x = minX;
+          data.y = minY;
+          data.w = maxX - minX;
+          data.h = maxY - minY;
+        } else if (type === "baseDrawImage") {
+          data.w = data.w || 100;
+          data.h = data.h || 100;
+        }
+        const isInElement = containsPoint(point, data);
+        if (isInElement) {
+          // 检测到元素内，设置hover格式，加一个虚线边框
+          this.elements[id].hover = data;
+          this.hoverStauts = true;
+          console.warn("检测在元素内", id, type);
+          break;
+        }
+      }
+      if (this.hoverStauts) {
+        this.hoverStauts = false;
+        this.reRender();
+      }
     });
   }
 
@@ -157,6 +202,9 @@ class BaseCanvas extends EventListener {
 
     this.ctx.strokeStyle = "blue";
     this.ctx.strokeRect(x, y, w, h);
+
+    this.drawHoverRect(id);
+
     this.ctx.restore();
 
     // 此时的x和y都是相对坐标，无论如何偏移，x和y都是一样的
@@ -188,6 +236,7 @@ class BaseCanvas extends EventListener {
     ctx.lineTo(x - w / 2, y);
     ctx.closePath();
     ctx.stroke();
+    this.drawHoverRect(id);
     ctx.restore();
     this.saveItem(id, "baseDrawDiamond", {
       x,
@@ -233,6 +282,8 @@ class BaseCanvas extends EventListener {
       ctx.lineTo(x, y);
       ctx.stroke();
     }
+
+    this.drawHoverRect(id);
     ctx.restore();
     this.saveItem(id, "baseDrawPen", array);
   }
@@ -276,6 +327,8 @@ class BaseCanvas extends EventListener {
       // 切割为多行文字，然后偏移y进行绘制
       ctx.fillText(textArray[i], x, y + globalConfig.fontLineHeight * i);
     }
+
+    this.drawHoverRect(id);
     ctx.restore();
 
     this.saveItem(id, "baseDrawText", data);
@@ -414,6 +467,20 @@ class BaseCanvas extends EventListener {
 
   setData(data) {
     this.elements = Object.assign(this.elements, data);
+  }
+
+  drawHoverRect(id) {
+    const ctx = this.ctx;
+    const {hover} = this.elements[id];
+    if (hover) {
+      const {x, y, w, h} = hover;
+      ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = "red";
+      ctx.strokeRect(x, y, w, h);
+
+      this.elements[id].hover = null;
+      this.hoverStauts = true;
+    }
   }
 }
 

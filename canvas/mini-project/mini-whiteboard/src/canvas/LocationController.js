@@ -1,7 +1,7 @@
 import BaseCanvas from "./base/BaseCanvas.js";
 import {nanoid} from "nanoid";
 import {throttle} from "./util/utils.js";
-import {EventType, globalConfig} from "./config/config.js";
+import {EventType, globalConfig, HTMLEventType} from "./config/config.js";
 import EventListener from "./util/eventListener.js";
 import {ElMessage} from "element-plus";
 import {initData} from "./config/mockInitData.js";
