@@ -16,10 +16,14 @@
         {{ item === currentStatus ? "当前状态:" + item : "切换状态:" + item }}
       </el-button>
     </template>
+
+    <el-button @click="canvasToImage">canvas转化为image</el-button>
+    <el-button @click="restoreCanvas">恢复canvas透明度</el-button>
   </div>
   <div class="content" id="wrapper" ref="canvasWrapper">
     <canvas id="grid"></canvas>
     <canvas id="main"></canvas>
+    <!--    <canvas id="test"></canvas>-->
   </div>
   <div class="canvas_button-wrapper">
     <el-button :icon="Plus" @click="addScale"></el-button>
@@ -101,6 +105,77 @@ export default {
       grid.setScale(newValue);
     };
 
+    const canvasToImage = () => {
+      // 跟正常canvas绘制的区别在于：我们需要对整个画布进行裁剪，有一些很空的地方要去掉
+      // 比如一个画布只有右上角有东西，那我们就应该只导出右上角那一部分
+
+      const elements = main.getCanvasData();
+      let minX = Number.MAX_SAFE_INTEGER;
+      let minY = Number.MAX_SAFE_INTEGER;
+      let maxX = Number.MIN_SAFE_INTEGER;
+      let maxY = Number.MIN_SAFE_INTEGER;
+      for (const id in elements) {
+        const {type, data: sourceData} = elements[id];
+        if (type === "baseDrawPen") {
+          for (const item of sourceData) {
+            const [x, y] = item;
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+          }
+        } else {
+          const {x, y} = sourceData;
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        }
+      }
+
+      // TODO 如何利用BaseCanvas封装的方法呢？
+      const canvas = document.createElement("canvas");
+      // const canvas = document.getElementById("test");
+      document.getElementById("main").style.opacity = 0;
+      const ctx = canvas.getContext("2d");
+      const toImageThis = {
+        ctx: ctx,
+        state: main.getCanvasState(),
+        elements: elements,
+        saveItem() {},
+        drawHoverRect() {},
+        drawSelectRect() {},
+      };
+
+      // +40是想要留有一点空隙
+      const width = maxX - minX;
+      const height = maxY - minY;
+      console.error("canvasToImage", width);
+      console.error("canvasToImage", height);
+      // canvas.style.width = width + "px";
+      // canvas.style.height = height + "px";
+      // TODO 为什么要乘2次？？
+      canvas.width = width * window.devicePixelRatio * window.devicePixelRatio;
+      canvas.height = width * window.devicePixelRatio * window.devicePixelRatio;
+
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+      for (const id in elements) {
+        const {type, data: sourceData} = elements[id];
+        const fn = main.baseCanvas[type];
+        fn.call(toImageThis, id, sourceData);
+      }
+
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL();
+      a.download = "test.png";
+      a.click();
+    };
+
+    const restoreCanvas = () => {
+      document.getElementById("main").style.opacity = 1;
+    };
+
     return {
       resetScroll,
       canvasWrapper,
@@ -113,6 +188,8 @@ export default {
       Minus,
       addScale,
       reduceScale,
+      canvasToImage,
+      restoreCanvas,
     };
   },
 };

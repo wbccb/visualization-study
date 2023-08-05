@@ -300,6 +300,14 @@ class LocationController extends EventListener {
   setScale(scale) {
     this.baseCanvas.setScale(scale);
   }
+
+  getCanvasData() {
+    return this.baseCanvas.elements;
+  }
+
+  getCanvasState() {
+    return this.baseCanvas.state;
+  }
 }
 
 export default LocationController;

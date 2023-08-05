@@ -30,7 +30,6 @@ class BaseCanvas extends EventListener {
     this.height = offsetHeight;
 
     this.state = {
-      scale: 1,
       scrollX: 0,
       scrollY: 0,
       oldZoom: 1,
@@ -161,7 +160,7 @@ class BaseCanvas extends EventListener {
     let {x, y, w, h, scrollX: lastScrollX, scrollY: lastScrollY} = data;
     this.ctx.save();
     const state = this.state;
-    const {scale} = state;
+    const {zoom} = state;
 
     // 我去！！！你要记住一件事，你下面是要this.ctx.translate(state.scrollX, state.scrollY)
     // 因此你的rect可以恢复到没有scrollX的位置啊啊啊啊！！也就是x和y一直都不变！！！！！然后原点translate即可！！！啊啊啊啊

@@ -30,7 +30,7 @@ html, body, #app {
 }
 
 
-#grid, #main {
+#grid, #main, #test {
     width: 600px;
     height: 600px;
     overflow: scroll;
