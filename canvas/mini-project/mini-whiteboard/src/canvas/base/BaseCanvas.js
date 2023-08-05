@@ -5,7 +5,7 @@ import {nanoid} from "nanoid";
 import TextHelper from "./TextHelper.js";
 import {EventType, globalConfig, HTMLEventType} from "../config/config.js";
 import ImageHelper from "./ImageHelper.js";
-import {containsPoint} from "../util/algorithm.js";
+import {containsPoint, getHoverElement} from "../util/algorithm.js";
 
 /**
  * 封装通用方法，在这个类中进行canvas的初始化，然后将canvas传入到管理类中
@@ -47,9 +47,22 @@ class BaseCanvas extends EventListener {
     this.renderCanvas();
 
     // 所有绘制数据的管理，用于清除某一个数据进行重绘
-    this.elements = {};
+    // this.elements = {};
 
     this.initListener();
+
+    // TODO 调试方便，可以很好跟踪this.elements的数据辩护
+    this.elements = new Proxy(
+      {},
+      {
+        get(target, key, receiver) {
+          return Reflect.get(target, key);
+        },
+        set(target, prop, val, receiver) {
+          return Reflect.set(target, prop, val, receiver);
+        },
+      },
+    );
   }
 
   initListener() {
@@ -77,50 +90,6 @@ class BaseCanvas extends EventListener {
         scrollX,
         scrollY,
       });
-    });
-
-    this.canvasDom.addEventListener(HTMLEventType.mousemove, (e) => {
-      const point = this.getTouchCanvasPoint(e);
-
-      // 遍历所有this.elements
-      for (const id in this.elements) {
-        const {type, data: sourceData} = this.elements[id];
-        // TODO 逻辑未完善，主要是针对不同类型的计算对应的宽高，比如自由画笔的宽高等等
-        let data = sourceData;
-        if (type === "baseDrawPen") {
-          let maxX = Number.MIN_SAFE_INTEGER;
-          let maxY = Number.MIN_SAFE_INTEGER;
-          let minX = Number.MAX_VALUE;
-          let minY = Number.MAX_SAFE_INTEGER;
-          for (const item of sourceData) {
-            const [x, y] = item;
-            minX = Math.min(minX, x);
-            minY = Math.min(minY, y);
-            maxX = Math.max(maxX, x);
-            maxY = Math.max(maxY, y);
-          }
-          data = {};
-          data.x = minX;
-          data.y = minY;
-          data.w = maxX - minX;
-          data.h = maxY - minY;
-        } else if (type === "baseDrawImage") {
-          data.w = data.w || 100;
-          data.h = data.h || 100;
-        }
-        const isInElement = containsPoint(point, data);
-        if (isInElement) {
-          // 检测到元素内，设置hover格式，加一个虚线边框
-          this.elements[id].hover = data;
-          this.hoverStauts = true;
-          console.warn("检测在元素内", id, type);
-          break;
-        }
-      }
-      if (this.hoverStauts) {
-        this.hoverStauts = false;
-        this.reRender();
-      }
     });
   }
 
@@ -204,6 +173,7 @@ class BaseCanvas extends EventListener {
     this.ctx.strokeRect(x, y, w, h);
 
     this.drawHoverRect(id);
+    this.drawSelectRect(id);
 
     this.ctx.restore();
 
@@ -237,6 +207,7 @@ class BaseCanvas extends EventListener {
     ctx.closePath();
     ctx.stroke();
     this.drawHoverRect(id);
+    this.drawSelectRect(id);
     ctx.restore();
     this.saveItem(id, "baseDrawDiamond", {
       x,
@@ -284,6 +255,7 @@ class BaseCanvas extends EventListener {
     }
 
     this.drawHoverRect(id);
+    this.drawSelectRect(id);
     ctx.restore();
     this.saveItem(id, "baseDrawPen", array);
   }
@@ -329,10 +301,12 @@ class BaseCanvas extends EventListener {
     }
 
     this.drawHoverRect(id);
+    this.drawSelectRect(id);
     ctx.restore();
 
     this.saveItem(id, "baseDrawText", data);
   }
+
   // ---------------------------- 文本 ----------------------------
 
   getBase64Image() {
@@ -466,21 +440,84 @@ class BaseCanvas extends EventListener {
   }
 
   setData(data) {
-    this.elements = Object.assign(this.elements, data);
+    for (let key in data) {
+      this.elements[key] = data[key];
+    }
   }
 
   drawHoverRect(id) {
     const ctx = this.ctx;
-    const {hover} = this.elements[id];
-    if (hover) {
-      const {x, y, w, h} = hover;
+    const {hoverRectData} = this.elements[id];
+    if (hoverRectData) {
+      const {x, y, w, h} = hoverRectData;
       ctx.setLineDash([3, 4]);
       ctx.strokeStyle = "red";
       ctx.strokeRect(x, y, w, h);
 
-      this.elements[id].hover = null;
-      this.hoverStauts = true;
+      this.hoverRectData = this.elements[id].hoverRectData;
+      this.hoverId = id;
+
+      // 移动鼠标时，由于hover数据已经被清空，因此不会再绘制同样位置的rect
+      // 只有下次移动检测更新对应this.elements[id].hover才会触发hoverRect的绘制
+      this.elements[id].hoverRectData = null;
     }
+  }
+
+  drawSelectRect(id) {
+    if (this.selectId !== id || !this.selectRectData) {
+      return;
+    }
+    const {x, y, w, h} = this.selectRectData;
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.strokeWidth = 10;
+    ctx.strokeStyle = "green";
+    ctx.strokeRect(x, y, w, h);
+    ctx.restore();
+  }
+
+  getHoverElementId() {
+    // 目前不仅hover在某一个元素，还对这个元素进行了点击，那么这个元素就被选中了
+    return this.hoverId;
+  }
+
+  getHoverElementRect() {
+    return this.hoverRectData;
+  }
+
+  setHoverElement(id, hoverRectData) {
+    // this.hoverId = id;
+    // this.hoverRectData = hoverRectData;
+    this.elements[id].hoverRectData = hoverRectData;
+    this.reRender();
+  }
+
+  setSelectElement(id, selectRectData) {
+    this.selectId = id; // 用于更新对应id的data.x和data.y
+    this.selectRectData = selectRectData; // 用于绘制选中矩形，包括x、y、w、h
+    this.reRender();
+  }
+
+  getSelectElementId() {
+    return this.selectId;
+  }
+
+  updateSelectElement(x, y) {
+    // 移动过程中就应该清除掉selectRect
+    this.selectRectData = null;
+    if (this.elements.type === "baseDrawPen") {
+      // 暂时无法移动画笔
+      console.error("暂时无法移动画笔");
+    } else {
+      this.elements[this.selectId].data.x = x;
+      this.elements[this.selectId].data.y = y;
+    }
+    this.reRender();
+  }
+
+  removeSelectStatus() {
+    this.selectId = null;
+    this.selectRectData = null;
   }
 }
 

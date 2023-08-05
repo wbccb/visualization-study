@@ -43,7 +43,7 @@ export default {
       init();
     });
 
-    const initStatus = Status.TEXT;
+    const initStatus = Status.NO;
     let main;
     let grid;
 
@@ -55,9 +55,9 @@ export default {
 
       const mainBaseCanvas = new BaseCanvas("main", false);
       main = new LocationController(mainBaseCanvas, {status: initStatus});
-      // main.onEvent(EventType.STATUS_CHANGE, () => {
-      //   setStatus(Status.NO);
-      // });
+      main.onEvent(EventType.STATUS_CHANGE, (status) => {
+        setStatus(status);
+      });
 
       const domWrapper = document.getElementById("wrapper");
       // domWrapper.addEventListener("pointermove", (event) => {

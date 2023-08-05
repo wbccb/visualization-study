@@ -1,3 +1,52 @@
+export function getHoverElement(point, elements) {
+  let hoverStauts = false;
+  // 遍历所有elements
+  for (const id in elements) {
+    const {type, data: sourceData} = elements[id];
+    // TODO 逻辑未完善，主要是针对不同类型的计算对应的宽高，比如自由画笔的宽高等等
+    let data = sourceData;
+    if (type === "baseDrawPen") {
+      let maxX = Number.MIN_SAFE_INTEGER;
+      let maxY = Number.MIN_SAFE_INTEGER;
+      let minX = Number.MAX_VALUE;
+      let minY = Number.MAX_SAFE_INTEGER;
+      for (const item of sourceData) {
+        const [x, y] = item;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+      data = {};
+      data.x = minX;
+      data.y = minY;
+      data.w = maxX - minX;
+      data.h = maxY - minY;
+    } else if (type === "baseDrawImage") {
+      data.w = data.w || 100;
+      data.h = data.h || 100;
+    }
+    const isInElement = containsPoint(point, data);
+    if (isInElement) {
+      // 检测到元素内，设置hover格式，加一个虚线边框
+      // elements[id].hover = data;
+      // hoverStauts = true;
+      // console.warn("检测在元素内", id, type);
+      // break;
+      return {
+        id: id,
+        hover: data,
+      };
+    }
+  }
+
+  // return hoverStauts;
+  // if (hoverStauts) {
+  //   reRender && reRender();
+  // }
+  return null;
+}
+
 export function containsPoint(point, {x, y, w, h}) {
   const lines = getLines(x, y, w, h);
   const xPoints = findCrossPoints(point, lines);

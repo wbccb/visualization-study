@@ -5,6 +5,7 @@ import {EventType, globalConfig, HTMLEventType} from "./config/config.js";
 import EventListener from "./util/eventListener.js";
 import {ElMessage} from "element-plus";
 import {initData} from "./config/mockInitData.js";
+import {getHoverElement} from "./util/algorithm.js";
 
 export const Status = {
   NO: "无状态",
@@ -13,6 +14,7 @@ export const Status = {
   PEN: "自由画笔",
   TEXT: "多行文字",
   IMAGE: "点击上传图片并绘制",
+  SELECT: "选中可以移动状态",
 };
 
 /**
@@ -76,6 +78,27 @@ class LocationController extends EventListener {
       console.warn("LocationController pointerDown");
       this.onPointDown(e);
     });
+
+    // 不是BaseCanvas的通用功能，无法在Grid中通用，因此没必要在BaseCanvas中声明对应的逻辑
+    canvasDom.addEventListener(HTMLEventType.mousemove, (e) => {
+      if (this.baseCanvas.getSelectElementId()) {
+        // 目前为选中状态，通过pointerdown点击事件更新选中item
+        return;
+      }
+      console.log("mousemove");
+      const point = this.baseCanvas.getTouchCanvasPoint(e);
+      const elements = this.baseCanvas.elements;
+
+      const hoverObj = getHoverElement(point, elements);
+      if (!hoverObj) {
+        // 如果没有将鼠标放置在某一个元素上面，应该触发重绘，把hoverRect去掉
+        this.baseCanvas.reRender();
+        return;
+      }
+
+      const {id, hover: selectRectData} = hoverObj;
+      this.baseCanvas.setHoverElement(id, selectRectData);
+    });
   }
 
   onPointDown(e) {
@@ -93,6 +116,24 @@ class LocationController extends EventListener {
     };
     this.startPointId = nanoid(); //=> "V1StGXR8_Z5jdHi6B-myT"
     console.error("新的id", this.startPointId);
+
+    if (this.status === Status.NO) {
+      // TODO hover状态进行点击选中
+      if (this.baseCanvas.getHoverElementId()) {
+        // 当前鼠标在一个元素上，因为你点击了，因此触发选中逻辑
+        const id = this.baseCanvas.getHoverElementId();
+        const hoverRectData = this.baseCanvas.getHoverElementRect();
+        this.baseCanvas.setSelectElement(id, hoverRectData);
+        this.emitEvent(EventType.STATUS_CHANGE, Status.SELECT);
+      }
+    } else if (this.status === Status.SELECT) {
+      // 当前有选中，点击时更新选中
+      const elements = this.baseCanvas.elements;
+      const hoverObj = getHoverElement(canvasPoint, elements);
+      if (!hoverObj) return;
+      const {id, hover: selectRectData} = hoverObj;
+      this.baseCanvas.setSelectElement(id, selectRectData);
+    }
 
     if (this.status === Status.PEN) {
       const item = [x, y];
@@ -203,6 +244,13 @@ class LocationController extends EventListener {
           y: canvasPoint.y,
         };
         break;
+      case Status.SELECT:
+        if (!this.baseCanvas.getSelectElementId()) {
+          return;
+        }
+        // TODO 选中后的移动逻辑
+        this.baseCanvas.updateSelectElement(canvasPoint.x, canvasPoint.y);
+        break;
     }
 
     if (!fn) {
@@ -223,10 +271,14 @@ class LocationController extends EventListener {
     canvasDom.removeEventListener("pointerup", this.eventListenerPointerUp);
 
     // TODO 后期应该设计成点击某一个就为某一种状态，然后绘制成功后就恢复到没有状态的情况
+    this.baseCanvas.removeSelectStatus();
   }
 
   changeStatus(status) {
     this.status = status;
+    if (status !== Status.SELECT) {
+      this.baseCanvas.removeSelectStatus();
+    }
 
     if (status === Status.IMAGE) {
       // TODO 不能单纯监听canvas事件，必须扩大范围
