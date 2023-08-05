@@ -4,6 +4,7 @@ import {throttle} from "./util/utils.js";
 import {EventType, globalConfig} from "./config/config.js";
 import EventListener from "./util/eventListener.js";
 import {ElMessage} from "element-plus";
+import {initData} from "./config/mockInitData.js";
 
 export const Status = {
   NO: "无状态",
@@ -35,6 +36,7 @@ class LocationController extends EventListener {
     this.status = options.status || Status.Rect;
     this.init();
     this.initListener();
+    this.initMockData();
   }
 
   init() {}
@@ -46,6 +48,11 @@ class LocationController extends EventListener {
     // pointerup: 绘制结束，注销两个事件
 
     this.initPointerdownEvent();
+  }
+
+  initMockData() {
+    this.baseCanvas.setData(initData);
+    this.baseCanvas.reRender();
   }
 
   /**

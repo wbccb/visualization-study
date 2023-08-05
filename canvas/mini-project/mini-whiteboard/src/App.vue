@@ -84,12 +84,18 @@ export default {
     const currentScale = ref(1);
     const addScale = () => {
       const newValue = parseFloat((currentScale.value + 1).toFixed(1));
+      if (newValue <= 0 || newValue >= 4) {
+        return;
+      }
       currentScale.value = newValue;
       main.setScale(newValue);
       grid.setScale(newValue);
     };
     const reduceScale = () => {
       const newValue = parseFloat((currentScale.value - 1).toFixed(1));
+      if (newValue <= 0 || newValue >= 4) {
+        return;
+      }
       currentScale.value = newValue;
       main.setScale(newValue);
       grid.setScale(newValue);

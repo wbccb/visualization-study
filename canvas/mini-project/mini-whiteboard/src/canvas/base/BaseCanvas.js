@@ -234,7 +234,7 @@ class BaseCanvas extends EventListener {
       ctx.stroke();
     }
     ctx.restore();
-    this.saveItem(id, "baseDrawPen", this.penDataArray);
+    this.saveItem(id, "baseDrawPen", array);
   }
 
   // ---------------------------- 文本 ----------------------------
@@ -337,6 +337,9 @@ class BaseCanvas extends EventListener {
 
   saveItem(id, type, data = {}) {
     // 存储的data={x,y}中的x和y应该是去除scrollX和scrollY的值
+    if (!data) {
+      return;
+    }
     this.elements[id] = {
       type: type,
       data: data,
@@ -407,6 +410,10 @@ class BaseCanvas extends EventListener {
       oldZoom: oldZoom,
       newZoom: newZoom,
     });
+  }
+
+  setData(data) {
+    this.elements = Object.assign(this.elements, data);
   }
 }
 
