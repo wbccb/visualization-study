@@ -1,26 +1,28 @@
 <template>
-  <div class="btn-wrapper">
-    <div style="margin-bottom: 10px">
-      <el-alert :title="'当前状态:' + currentStatus" type="success" />
-    </div>
+  <div class="btn-wrapper" id="btn-wrapper">
+    <!--    <div style="margin-bottom: 10px">-->
+    <!--      <el-alert :title="'当前状态:' + currentStatus" type="success" />-->
+    <!--    </div>-->
 
     <!--    <el-button @click="resetScroll">点击恢复scroll</el-button>-->
-    <el-button @click="clearAll">全部清除</el-button>
+    <el-button @click="clearAll" small>全部清除</el-button>
 
     <template v-for="(item, index) in Status">
       <el-button
         :type="item === currentStatus ? 'danger' : 'default'"
         :disabled="item === currentStatus"
         @click="setStatus(item)"
+        small
+        style="margin-bottom: 5px"
       >
         {{ item === currentStatus ? "当前状态:" + item : "切换状态:" + item }}
       </el-button>
     </template>
 
-    <el-button @click="canvasToImage">canvas转化为image</el-button>
-    <el-button @click="restoreCanvas">恢复canvas透明度</el-button>
+    <el-button @click="canvasToImage" small>canvas转化为image</el-button>
+    <el-button @click="restoreCanvas" small>恢复canvas透明度</el-button>
   </div>
-  <div class="content" id="wrapper" ref="canvasWrapper">
+  <div class="content" id="wrapper" ref="canvasWrapper" :style="{marginTop: marginTopRef + 'px'}">
     <canvas id="grid"></canvas>
     <canvas id="main"></canvas>
     <!--    <canvas id="test"></canvas>-->
@@ -51,7 +53,17 @@ export default {
     let main;
     let grid;
 
+    const marginTopRef = ref(0);
+    window.onresize = () => {
+      const dom = document.getElementById("btn-wrapper");
+      const height = dom.getBoundingClientRect().height;
+      marginTopRef.value = height + 20;
+    };
     function init() {
+      const dom = document.getElementById("btn-wrapper");
+      const height = dom.getBoundingClientRect().height;
+      marginTopRef.value = height + 20;
+
       const gridBaseCanvas = new BaseCanvas("grid", true);
       grid = new GridController(gridBaseCanvas, {
         size: 20,
@@ -190,6 +202,7 @@ export default {
       reduceScale,
       canvasToImage,
       restoreCanvas,
+      marginTopRef,
     };
   },
 };

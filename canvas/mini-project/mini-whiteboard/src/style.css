@@ -22,9 +22,9 @@ html, body, #app {
     width: 600px;
     height: 600px;
     position: absolute;
-    top: 50%;
+    top: 0px;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
     overflow: scroll;
     border: 1px solid #333;
 }
