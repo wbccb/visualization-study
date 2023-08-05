@@ -4,12 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --force",
     "build": "vite build",
     "preview": "vite preview",
     "format": "prettier --write 'src/**/*.+(js|ts|jsx|tsx)'"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.1.0",
     "element-plus": "^2.3.8",
     "eslint": "^8.44.0",
     "eventemitter3": "^5.0.1",
@@ -19,8 +20,8 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.2.3",
-    "vite": "^4.4.5",
     "unplugin-auto-import": "0.15.3",
-    "unplugin-vue-components": "0.24.1"
+    "unplugin-vue-components": "0.24.1",
+    "vite": "^4.4.5"
   }
 }

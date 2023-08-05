@@ -30,7 +30,7 @@ html, body, #app {
 }
 
 
-#canvas, #main {
+#grid, #main {
     width: 600px;
     height: 600px;
     overflow: scroll;
@@ -38,11 +38,17 @@ html, body, #app {
     top: 0px;
 }
 
-#canvas {
+#grid {
     z-index: 1;
     touch-action: none;
 }
 
 #main {
     z-index: 100;
+}
+
+.canvas_button-wrapper {
+    position: absolute;
+    bottom: 20px;
+    z-index: 103;
 }

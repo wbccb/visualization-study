@@ -18,8 +18,13 @@
     </template>
   </div>
   <div class="content" id="wrapper" ref="canvasWrapper">
-    <canvas id="canvas"></canvas>
+    <canvas id="grid"></canvas>
     <canvas id="main"></canvas>
+  </div>
+  <div class="canvas_button-wrapper">
+    <el-button :icon="Plus" @click="addScale"></el-button>
+    <el-text style="margin: 0px 10px">比例是{{ currentScale }}</el-text>
+    <el-button :icon="Minus" @click="reduceScale"></el-button>
   </div>
 </template>
 
@@ -30,6 +35,7 @@ import LocationController from "./canvas/LocationController.js";
 import BaseCanvas from "./canvas/base/BaseCanvas.js";
 import {Status} from "./canvas/LocationController.js";
 import {EventType} from "./canvas/config/config.js";
+import {Plus, Minus} from "@element-plus/icons-vue";
 
 export default {
   setup() {
@@ -39,17 +45,19 @@ export default {
 
     const initStatus = Status.TEXT;
     let main;
+    let grid;
+
     function init() {
-      const gridBaseCanvas = new BaseCanvas("canvas", true);
-      const grid = new GridController(gridBaseCanvas, {
+      const gridBaseCanvas = new BaseCanvas("grid", true);
+      grid = new GridController(gridBaseCanvas, {
         size: 20,
       });
 
-      const mainBaseCanvas = new BaseCanvas("main");
+      const mainBaseCanvas = new BaseCanvas("main", false);
       main = new LocationController(mainBaseCanvas, {status: initStatus});
-      main.on(EventType.STATUS_CHANGE, () => {
-        setStatus(Status.NO);
-      });
+      // main.onEvent(EventType.STATUS_CHANGE, () => {
+      //   setStatus(Status.NO);
+      // });
 
       const domWrapper = document.getElementById("wrapper");
       // domWrapper.addEventListener("pointermove", (event) => {
@@ -73,6 +81,20 @@ export default {
       currentStatus.value = status;
     };
 
+    const currentScale = ref(1);
+    const addScale = () => {
+      const newValue = parseFloat((currentScale.value + 1).toFixed(1));
+      currentScale.value = newValue;
+      main.setScale(newValue);
+      grid.setScale(newValue);
+    };
+    const reduceScale = () => {
+      const newValue = parseFloat((currentScale.value - 1).toFixed(1));
+      currentScale.value = newValue;
+      main.setScale(newValue);
+      grid.setScale(newValue);
+    };
+
     return {
       resetScroll,
       canvasWrapper,
@@ -80,6 +102,11 @@ export default {
       setStatus,
       currentStatus,
       clearAll,
+      currentScale,
+      Plus,
+      Minus,
+      addScale,
+      reduceScale,
     };
   },
 };

@@ -3,7 +3,7 @@ import {throttle} from "../util/utils.js";
 import EventListener from "../util/eventListener.js";
 import {nanoid} from "nanoid";
 import TextHelper from "./TextHelper.js";
-import {globalConfig} from "../config/config.js";
+import {EventType, globalConfig} from "../config/config.js";
 import ImageHelper from "./ImageHelper.js";
 
 /**
@@ -32,6 +32,10 @@ class BaseCanvas extends EventListener {
       scale: 1,
       scrollX: 0,
       scrollY: 0,
+      oldZoom: 1,
+      zoom: 1,
+      itemValueX: 100,
+      itemValueY: 100,
     };
     this.coordinateHelper = new CoordinateHelper(this);
     if (!isGrid) {
@@ -68,7 +72,7 @@ class BaseCanvas extends EventListener {
       // this.ctx.translate(this.state.scrollX, this.state.scrollY);
 
       forceRender.call(this);
-      this.emit("wheelChange", {
+      this.emitEvent("wheelChange", {
         scrollX,
         scrollY,
       });
@@ -143,6 +147,7 @@ class BaseCanvas extends EventListener {
     let {x, y, w, h, scrollX: lastScrollX, scrollY: lastScrollY} = data;
     this.ctx.save();
     const state = this.state;
+    const {scale} = state;
 
     // 我去！！！你要记住一件事，你下面是要this.ctx.translate(state.scrollX, state.scrollY)
     // 因此你的rect可以恢复到没有scrollX的位置啊啊啊啊！！也就是x和y一直都不变！！！！！然后原点translate即可！！！啊啊啊啊
@@ -364,6 +369,44 @@ class BaseCanvas extends EventListener {
 
   removeEventListener(type, fn) {
     this.canvasDom.removeEventListener(type, fn);
+  }
+
+  setScale(scale) {
+    this.state.oldZoom = this.state.zoom;
+    this.state.zoom = scale;
+    const oldZoom = this.state.oldZoom;
+    const newZoom = this.state.zoom;
+
+    // TODO (手机端)定点缩放需要先缩放，然后再进行位置的平移，因为你得保持缩放后的这个点仍然在你手心的位置:如果是在某一个点进行放大/缩小，那么需要先zoom + 将canvas平移到zoom后的点的位置
+    // TODO 但是(PC端)不需要，可以直接整体放大/缩小
+
+    // 原来放大倍数为1.1倍数，目前坐标值为 1.1
+    // 现在放大倍数为1.2倍数，那么坐标值应该变为 1.2
+    this.state.scrollX = (this.state.scrollX / oldZoom) * newZoom;
+    this.state.scrollY = (this.state.scrollY / oldZoom) * newZoom;
+
+    this.state.itemValueX = (this.state.itemValueX / oldZoom) * newZoom;
+    this.state.itemValueY = (this.state.itemValueY / oldZoom) * newZoom;
+
+    const keys = Object.keys(this.elements);
+    for (const id of keys) {
+      const item = this.elements[id];
+      if (item.data) {
+        item.data.x = (item.data.x / oldZoom) * newZoom;
+        item.data.y = (item.data.y / oldZoom) * newZoom;
+        if (item.data.w) {
+          item.data.w = (item.data.w / oldZoom) * newZoom;
+          item.data.h = (item.data.h / oldZoom) * newZoom;
+        }
+      }
+    }
+
+    // 触发重新更新
+    this.reRender();
+    this.emitEvent(EventType.SCALE_CHANGE, {
+      oldZoom: oldZoom,
+      newZoom: newZoom,
+    });
   }
 }
 

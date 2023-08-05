@@ -5,4 +5,5 @@ export const globalConfig = {
 
 export const EventType = {
   STATUS_CHANGE: "status_change",
+  SCALE_CHANGE: "scale_change",
 };

@@ -19,7 +19,7 @@ export const Status = {
  */
 class LocationController extends EventListener {
   constructor(baseCanvas, options = {}) {
-    super();
+    super("LocationController");
     this.baseCanvas = baseCanvas;
 
     this.width = baseCanvas.width;
@@ -229,13 +229,17 @@ class LocationController extends EventListener {
 
       this.baseCanvas.baseStartDrawImage(() => {
         // 取消图片触发的回调
-        this.emit(EventType.STATUS_CHANGE);
+        this.emitEvent(EventType.STATUS_CHANGE);
       });
     }
   }
 
   clearAll() {
     this.baseCanvas.clearAll();
+  }
+
+  setScale(scale) {
+    this.baseCanvas.setScale(scale);
   }
 }
 

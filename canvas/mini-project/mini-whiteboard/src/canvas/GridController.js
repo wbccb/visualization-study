@@ -1,5 +1,6 @@
 import BaseCanvas from "./base/BaseCanvas.js";
 import {nanoid} from "nanoid";
+import {EventType} from "./config/config.js";
 
 /**
  * 将BaseCanvas对象传入，使用BaseCanvas.xxx提供的通用方法进行业务开发
@@ -17,7 +18,11 @@ class GridController {
     ctx.lineWidth = 1;
     ctx.strokeStyle = "#dfe0e1";
 
-    this.baseCanvas.on("wheelChange", ({scrollX, scrollY}) => {
+    this.baseCanvas.onEvent("wheelChange", ({scrollX, scrollY}) => {
+      this.render();
+    });
+
+    this.baseCanvas.onEvent(EventType.SCALE_CHANGE, ({oldZoom, newZoom}) => {
       this.render();
     });
 
@@ -43,10 +48,10 @@ class GridController {
    */
   renderCoordinateAxis() {
     const ctx = this.baseCanvas.ctx;
-    const {scrollX, scrollY} = this.baseCanvas.state;
+    const {scrollX, scrollY, oldZoom, zoom, itemValueX, itemValueY} = this.baseCanvas.state;
     ctx.save();
-    const itemValueY = 100; // 每一个刻度100
-    const itemValueX = 100; // 每一个刻度100
+    // const itemValueY = 100 ; // 每一个刻度100
+    // const itemValueX = 100; // 每一个刻度100
     const tickLength = 8;
     const canvas = ctx.canvas;
     ctx.translate(scrollX, scrollY);
@@ -167,6 +172,10 @@ class GridController {
       ctx.stroke();
     }
     ctx.restore();
+  }
+
+  setScale(scale) {
+    this.baseCanvas.setScale(scale);
   }
 }
 
