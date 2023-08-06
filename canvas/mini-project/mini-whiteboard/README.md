@@ -16,12 +16,13 @@
 - [x]  支持整体画布放大缩小
 - [x]  绘制的图形支持选中、拖动
 - [x]  支持转化为图片下载
-- [ ]  性能优化实践
+- [x]  性能优化总结
 - [ ]  支持切换当前模式为svg
 - [ ]  支持转化为svg进行绘制
 
 
 ### v0.2.0版本
+- [ ]  性能优化实践
 - [ ]  交互优化，点击拖拽形成具体的绘制图形，绘制成功后恢复到无状态
 - [ ]  增加橡皮擦功能
 - [ ]  支持框选多个元素，进行移动、旋转
@@ -133,7 +134,115 @@ y = y+scrollY
 
 
 ## 性能优化
-1. https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas
+> https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas
+
+
+
+### 脏矩形渲染
+
+1. 脏矩形：改变某个图形的物理信息后，需要重新渲染的矩形区域，通常为目标图形的当前帧和下一帧组成的包围盒
+2. 包围盒：包围图形的最小矩形。通常用作低成本的碰撞检测。因为矩形的碰撞检测的算法是简单高效的，而复杂图形的碰撞检测是复杂且低效的
+
+```js
+/**** 局部渲染 ****/
+function partRender(targetX, targetY) {
+  // 【1】计算需要重绘的区域
+  // 为当前红色球和即将渲染的红色球形成的 “包围盒”
+  const dirtyBox = getCircleBBox(prevRedBall, {
+    x: targetX,
+    y: targetY,
+    radius: redRadius
+  });
+
+  // 【2】计算所有被碰撞的绿色球
+  const collisions = []; // 被碰撞的 ball 的坐标
+  for (let i = 0; i < greenBalls.length; i++) {
+    const { x, y } = greenBalls[i];
+    // +1 是为了弥补 strokeWidth 的 1px 宽度所产生的外扩像素
+    const circle = { x, y, radius: radius + 1 };
+    const circleBBox = getCircleBBox(circle);
+
+    if (isRectIntersect(circleBBox, dirtyBox)) {
+      collisions.push({ x, y });
+    }
+  }
+  // console.log(collisions.length);
+
+  // 【2】用 clip 圈定范围，进行局部绘制
+  // 范围为上一次的位置到当前位置，所形成的矩形
+  ctx.clearRect(dirtyBox.x, dirtyBox.y, dirtyBox.width, dirtyBox.height);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(dirtyBox.x, dirtyBox.y, dirtyBox.width, dirtyBox.height);
+  // 你可以取消这个注释，看看脏矩形范围
+  // ctx.stroke();
+  ctx.clip();
+  // 只绘制被碰撞的绿球
+  drawGreenBalls(collisions);
+  // 再画红球
+  drawRedBall(targetX, targetY);
+  ctx.restore();
+}
+```
+
+参考
+1. https://juejin.cn/post/7175706135305912375
+
+### 为每一个元素创建一个离屏canvas
+
+1. 空间换时间，记录每一个元素的配置数据（坐标、宽度、携带内容等等），然后为每一个元素绘制一个离屏canvas
+2. `canvas`可以使用`context.drawImage(canvas)`绘制canvas
+3. 元素改变时，可以重新绘制新的离屏canvas，然后重新`context.drawImage(canvas)`绘制canvas
+
+```js
+// 在离屏 canvas 上绘制
+var canvasOffscreen = document.createElement('canvas');
+canvasOffscreen.width = dw;
+canvasOffscreen.height = dh;
+canvasOffscreen.getContext('2d').drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
+
+// 在绘制每一帧的时候，绘制这个图形
+context.drawImage(canvasOffscreen, x, y);
+```
+
+### 多层画布 && 屏幕可见范围内元素才进行绘制
+
+1. 常用的优化手段，绘制/编辑元素时在动态canvas上操作，动态canvas元素少，重绘快
+2. 结束绘制/编辑元素时，将在动态canvas的元素加入到全量elements中，然后进行静态canvas的绘制
+3. 性能瓶颈在于全量绘制静态canvas的速度
+4. 在目前可视区域进行绘制可以减少绘制canvas元素的个数和体积
+
+
+### 滑动平移/放大缩小时将canvas转化为图片进行移动
+
+1. 在上面多层画布的基础上，我们全量绘制静态canvas后将canvas转化为图片
+2. 图片可以赋值给`<div backgroudImage></div>`，也可以赋值给`<img src>`
+3. 然后对`<div>`或者`<img>`进行CSS属性的更新，比如`transform: translate()`，达到平移不触发canvas重绘的目的
+
+> 生成图片如果过大，移动也会卡顿
+> 放大操作时，图片放大会变得模糊
+> 每次绘制全量静态canvas时，如果元素数量很多，会有点卡顿
+
+### 静态canvas使用Web worker进行绘制
+
+1. 在上面方案中
+- 多层画布绘制结束时需要绘制全量的静态canvas，并且生成对应的图片
+- 平移、放大、缩小canvas时直接操作图片，可以大大减少重绘次数
+- 平移、缩小结束后可以隐藏图片，直接显示(缩小后的)全量静态canvas
+- 放大图片后，需要重新绘制放大后的全量静态canvas + 生成对应的图片隐藏
+
+在上面的方案中，已经极大减少了需要重绘的次数，那么现在的瓶颈就在于重绘的性能
+- 通过只绘制屏幕可视范围内的元素可以减少绘制的内容，提高重绘的性能
+- 我们还可以通过`Web worker`进行全量静态canvas的绘制
+
+
+### 总结
+1. 减少绘制图形的个数
+2. 减少绘制指令的调用
+3. 分层渲染：正在绘制的部分可以使用少量元素的动态canvas不断触发重绘，绘制结束时进行全量静态canvas的绘制，比如拖动rect会不断触发重绘，如果元素非常非常多，不断触发重绘是非常耗费性能的
+4. 局部渲染：绘制可见区域（有移动画布的功能情况下） => 进阶：算法计算出动态变化的区域，进行区域重绘
+5. Web worker绘制离屏canvas
+
 
 
 # 参考
