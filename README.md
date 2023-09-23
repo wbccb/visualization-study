@@ -11,7 +11,7 @@
 ### canvas
 1. canvas基础知识：docs和demo
 2. canvas常见应用：mini-project（比如富文本，比如表格）
-> 开源库[G2](https://github.com/antvis/G2) 学习以及尝试参与issues修复
+> 尝试参与多种开源库进行pr
 
 ### three.js
 1. three.js基础知识：docs和demo
