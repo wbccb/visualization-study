@@ -2,7 +2,7 @@
 
 通过白板项目，熟练掌握canvas的常见场景编码，培养canvas坐标、滑动、放大缩小等综合性应用的开发能力，掌握常见的canvas优化方案
 
-## 开发进度
+## 1. 开发进度
 
 ### v0.1.0版本
 - [x]  画布背景网格显示
@@ -22,7 +22,6 @@
 - [ ]  支持切换当前模式为svg
 - [ ]  支持转化为svg进行绘制
 
-
 ### v0.2.0版本
 - [ ]  性能优化实践
 - [ ]  交互优化，点击拖拽形成具体的绘制图形，绘制成功后恢复到无状态
@@ -30,21 +29,21 @@
 - [ ]  绘制的图形支持选中、拖动、缩放、旋转
 - [ ]  支持转化为图片逻辑优化: 没有切割完整，还有大量空白的地方
 
-## canvas文件夹
+## 2. 代码目录说明
 
+### 2.1 canvas文件夹
 实现`canvas`的相关功能，包括背景网格、矩形、菱形、三角形、圆形、线段、箭头、自由画笔、文字、图片的相关封装
 
 > 动画可以参考：https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API/Tutorial/Advanced_animations
 
-## 其它文件
+### 2.2 其它文件
 
 使用`vue3+vite`进行项目的UI构建，使用`canvas文件夹`作为核心库，在UI界面中进行切换展示`canvas`的相关功能，主要有：
 
 - 基础功能展示
 - 性能优化展示（未优化前和优化后的性能对比）
 
-
-## 设计模式
+## 3. 设计模式
 
 > 可能涉及到下面这三种设计模式
 
@@ -52,22 +51,20 @@
 - 命令模式
 - 访问者模式
 
+## 4. 问题总结
 
-
-## 问题总结
-
-### wheel移动画布时，原点需不需要移动？移动后的绘制其它图形的坐标需不需要转化？
+### 4.1 wheel移动画布时，原点需不需要移动？移动后的绘制其它图形的坐标需不需要转化？
 
 滑动画布后，会计算得出`scrollX`和`scrollY`值，然后绘制多种元素时，都进行整体的`translate(x+scrollX, y+scrollY)`
 
 这样就不用每个坐标都进行叠加计算了
 
 ```js
-x = x+scrollX
-y = y+scrollY
+x = x + scrollX;
+y = y + scrollY;
 ```
 
-### 绘制文本
+### 4.2 绘制文本
 
 - 输入框改变文本后如何位置后，使用统一的fontStyle以及textBaseline="top"进行canvas的绘制
 - 多行文本利用textArea+div的宽度比较进行换行符插入，然后利用换行符进行切割，利用y+lineHeight作为偏移量进行每一行文字的绘制
@@ -76,8 +73,7 @@ y = y+scrollY
 - wheel移动画板的时候直接让textarea失去焦点，进行绘制
 - （TODO）复制黏贴文本时如何自动实现换行
 
-
-### 绘制图片
+### 4.3 绘制图片
 
 - 点击上传图片，解析得到图片内容
 - 鼠标没有点击之前，图片已经绘制成功，跟随鼠标移动进行图片的移动
@@ -85,17 +81,16 @@ y = y+scrollY
 - (TODO) 拖拽卡顿
 - (TODO) 从按钮点击后触发拖拽功能，如何触发canvas.pointerMove事件
 
-
-### 整体放大缩小
+### 4.4 整体放大缩小
 
 - 整体缩放时，所有值都应该进行`scale`比例的放大或者缩小
 - 放大缩小后移动的距离还是原来的值，比如你稍微滑动是scrollX+1px，现在滑动也是scrollX+1px
 - 在`baseCanvas.setScale()`中进行所有数据的`scale`比例的放大或者缩小，包括scrollX、scrollY、各种元素的x、y、w、h等等
 - 在`baseCanvas.setScale()`处理后，其它代码逻辑就不用改变
 
-### 元素选中
+### 4.5 元素选中
 
-#### 判断点在多边形内的算法
+#### 4.5.1 判断点在多边形内的算法
 
 1. 几何方法-交叉数法
 
@@ -126,20 +121,16 @@ y = y+scrollY
 ----
 
 
-#### hover and select
+#### 4.5.2 hover and select
 
 - 在`hover`的状态下，进行`hoverRect`的绘制，监听点击事件，如果当前`hover`还存在，也就是当前的鼠标仍然放在目前hover的元素上，即可命中选中状态
 - 在`select`的状态下，进行`selectRect`的绘制，同时将当前的状态Status改为`Status.select`
 - 在`Status.select`的状态下，`pointermove`事件拿到的坐标会实时更新`this.elements[this.selecetId].data.x`坐标
 
-
-
-## 性能优化
+## 5. 性能优化
 > https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas
 
-
-
-### 脏矩形渲染
+### 5.1 脏矩形渲染
 
 1. 脏矩形：改变某个图形的物理信息后，需要重新渲染的矩形区域，通常为目标图形的当前帧和下一帧组成的包围盒
 2. 包围盒：包围图形的最小矩形。通常用作低成本的碰撞检测。因为矩形的碰撞检测的算法是简单高效的，而复杂图形的碰撞检测是复杂且低效的
@@ -189,7 +180,7 @@ function partRender(targetX, targetY) {
 参考
 1. https://juejin.cn/post/7175706135305912375
 
-### 为每一个元素创建一个离屏canvas
+### 5.2 为每一个元素创建一个离屏canvas
 
 1. 空间换时间，记录每一个元素的配置数据（坐标、宽度、携带内容等等），然后为每一个元素绘制一个离屏canvas
 2. `canvas`可以使用`context.drawImage(canvas)`绘制canvas
@@ -206,15 +197,14 @@ canvasOffscreen.getContext('2d').drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh
 context.drawImage(canvasOffscreen, x, y);
 ```
 
-### 多层画布 && 屏幕可见范围内元素才进行绘制
+### 5.3 多层画布 && 屏幕可见范围内元素才进行绘制
 
 1. 常用的优化手段，绘制/编辑元素时在动态canvas上操作，动态canvas元素少，重绘快
 2. 结束绘制/编辑元素时，将在动态canvas的元素加入到全量elements中，然后进行静态canvas的绘制
 3. 性能瓶颈在于全量绘制静态canvas的速度
 4. 在目前可视区域进行绘制可以减少绘制canvas元素的个数和体积
 
-
-### 滑动平移/放大缩小时将canvas转化为图片进行移动
+### 5.4 滑动平移/放大缩小时将canvas转化为图片进行移动
 
 1. 在上面多层画布的基础上，我们全量绘制静态canvas后将canvas转化为图片
 2. 图片可以赋值给`<div backgroudImage></div>`，也可以赋值给`<img src>`
@@ -224,7 +214,7 @@ context.drawImage(canvasOffscreen, x, y);
 > 放大操作时，图片放大会变得模糊
 > 每次绘制全量静态canvas时，如果元素数量很多，会有点卡顿
 
-### 静态canvas使用Web worker进行绘制
+### 5.5 静态canvas使用Web worker进行绘制
 
 1. 在上面方案中
 - 多层画布绘制结束时需要绘制全量的静态canvas，并且生成对应的图片
@@ -236,8 +226,7 @@ context.drawImage(canvasOffscreen, x, y);
 - 通过只绘制屏幕可视范围内的元素可以减少绘制的内容，提高重绘的性能
 - 我们还可以通过`Web worker`进行全量静态canvas的绘制
 
-
-### 总结
+### 5.6 总结
 1. 减少绘制图形的个数
 2. 减少绘制指令的调用
 3. 分层渲染：正在绘制的部分可以使用少量元素的动态canvas不断触发重绘，绘制结束时进行全量静态canvas的绘制，比如拖动rect会不断触发重绘，如果元素非常非常多，不断触发重绘是非常耗费性能的
