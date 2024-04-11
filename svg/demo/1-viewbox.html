@@ -8,9 +8,9 @@
             text-align: center;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
 
-            flex-direction: column;
+            flex-direction: row;
         }
         div {
             margin-top: 100px;
@@ -21,21 +21,21 @@
 
 
 <div style="width: 200px; height: 200px">
-    没有使用viewBox进行缩放：svg内部元素大于svg的viewport
+    <div>没有使用viewBox进行缩放：svg的viewport < 内部元素的宽高</div>
     <svg width="100%" height="100%" style="background:#889cee">
         <circle cx="100" cy="100" r="200" fill="#ff0036"></circle>
     </svg>
 </div>
 
 <div style="width: 200px; height: 200px">
-    没有使用viewBox进行缩放（200 200 ｜ 50 50 50 ）：svg > 内部元素
+    <div>没有使用viewBox进行缩放：svg的viewport > 内部元素的宽高 </div>
     <svg width="100%" height="100%" style="background:#889cee">
         <circle cx="50" cy="50" r="50" fill="#ff0036"></circle>
     </svg>
 </div>
 
 <div style="width: 200px; height: 200px">
-    这是使用内部元素的viewBox进行缩放（200 200 ｜ 50 50 50 ）：svg > 内部元素
+    <div>使用内部元素的viewBox进行缩放：svg的viewport > 内部元素的宽高</div>
     <svg width="100%" height="100%" style="background:#889cee" viewBox="0 0 100 100">
         <circle cx="50" cy="50" r="50" fill="#ff0036"></circle>
     </svg>
