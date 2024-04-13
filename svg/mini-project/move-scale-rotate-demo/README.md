@@ -1,42 +1,13 @@
-# React + TypeScript + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
-
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
-
 # svg小型demo
 
-为了解决【移动】、【缩放】、【旋转】等相关功能的联动，优化相关的算法的demo
+为了解决[LogicFlow项目](https://github.com/didi/LogicFlow)中【移动】、【缩放】、【旋转】等相关功能的联动问题
 
-## 移动
+## 第三方demo思路分析
 
+> 基于[codesandbox示例](https://codesandbox.io/s/editor-example-yqp8ce?file=/src/demos/demo3-drag/edit/drag/index.tsx)的思路分析
 
-## 缩放
+## x6相关逻辑分析
 
+## LogicFlow相关逻辑分析
 
-## 旋转
+## demo实现思路

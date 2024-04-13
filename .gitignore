@@ -31,3 +31,5 @@ temp.*
 
 docs/.vitepress/dist
 docs/.vitepress/cache
+
+svg-related-temp

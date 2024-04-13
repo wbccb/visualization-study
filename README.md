@@ -26,8 +26,9 @@
 
 ### 3.1 canvas
 
+相关文档：基础、进阶、难点总结
 ```shell
-cd canvas 
+cd canvas/docs 
 npm install 
 npm run docs:dev
 ```
@@ -64,5 +65,10 @@ npm run docs:dev
 - [ ]  增加橡皮擦功能
 - [ ]  支持转化为图片逻辑优化: 没有切割完整，还有大量空白的地方
 
+### 3.2 svg
 
-#### 3.1.2 基于canvas的excel预览电子表格
+#### 3.2.1 基于React18实现svg移动、缩放、旋转的demo
+- [ ]  矩形、圆形和菱形的基础svg构建
+- [ ]  移动功能的实现
+- [ ]  旋转功能的实现
+- [ ]  缩放功能的实现
