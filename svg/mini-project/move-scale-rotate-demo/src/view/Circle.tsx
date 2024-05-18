@@ -1,7 +1,7 @@
-import { BaseProps } from "../types";
+import BaseNode from "./base/BaseNode.tsx";
 
-const Circle = (props: BaseProps & { r: number }) => {
-  const { x = 0, y = 0, r = 4, className = "" } = props;
+function SvgCircle(props: any) {
+  const { x = 0, y = 0, r = 4, className } = props;
   const attrs: Record<string, any> = {
     cx: x,
     cy: y,
@@ -24,6 +24,16 @@ const Circle = (props: BaseProps & { r: number }) => {
     attrs.className = "lf-basic-shape";
   }
   return <circle {...attrs} />;
+}
+const Circle = (props: any) => {
+  const getShape = () => {
+    const { model } = props;
+    const { x, y, r } = model;
+    const style = model.getNodeStyle();
+    return <SvgCircle {...style} x={x} y={y} r={r} />;
+  };
+
+  return <BaseNode getShape={getShape} />;
 };
 
 export default Circle;
