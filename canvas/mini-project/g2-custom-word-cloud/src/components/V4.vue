@@ -49,26 +49,48 @@ export default {
         });
 
         // 绘制多边形
-        const textBBox = textShape.getBBox();
+        const textBBox = textShape.getCanvasBBox();
         let {minX, minY, maxX, maxY} = textBBox;
         minY = minY - 15;
-        maxY = maxY + 12;
+        maxY = maxY + 10;
         minX = minX - 15;
         maxX = maxX + 12;
-        const points = [
-          {x: minX, y: minY},
-          {x: minX, y: maxY},
-          {x: maxX, y: maxY},
-          {x: maxX, y: minY},
-        ]
-        container.addShape('polygon', {
+        function roundedRectPath(minX, minY, maxX, maxY, radius) {
+          return [
+            ['M', minX, minY + radius],
+            ['Q', minX, minY, minX+radius, minY],
+            ['L', maxX - radius, minY],
+            ['Q', maxX, minY, maxX, minY+radius],
+            ['L', maxX, maxY - radius],
+            ['Q', maxX, maxY, maxX-radius, maxY],
+            ['L', minX + radius, maxY],
+            ['Q', minX, maxY, minX, maxY-radius],
+            ['L', minX, minY + radius],
+          ];
+        }
+        const radius = 10;
+        const path = roundedRectPath(minX, minY, maxX, maxY, radius);
+
+        // https://developer.mozilla.org/zh-CN/docs/Web/SVG/Tutorial/Paths
+        // 绘制路线本质是@antv/G使用svg进行path的绘制！需要有一定规则
+        // 也可以用椭圆A进行绘制，这里就不再尝试了
+        container.addShape('path', {
           attrs: {
-            ...cfg.style,
-            points: points.map(point => [point.x, point.y]),
+            path: path,
             fill: hexToRgba(cfg.color|| "#000", 0.16),
             stroke: cfg.color,
+            ...cfg.style
           }
         });
+        // container.addShape('polygon', {
+        //   attrs: {
+        //     ...cfg.style,
+        //     points: points.map(point => [point.x, point.y]),
+        //     fill: hexToRgba(cfg.color|| "#000", 0.16),
+        //     stroke: cfg.color,
+        //     radius: 0.5
+        //   }
+        // });
         return textShape;
       }
     });
@@ -80,10 +102,11 @@ export default {
     dv.transform({
       type: 'tag-cloud',
       fields: ['labelName', 'count'],
-      size: [1000, 1000],
+      size: [500, 500],
       font: 'Verdana',
-      padding: 30,
+      padding: 0,
       timeInterval: 5000, // max execute time
+      spiral: 'archimedean',
       fontSize(d) {
         if (d.count) {
           return ((d.count - min) / (max - min)) * (80 - 24) + 24;
