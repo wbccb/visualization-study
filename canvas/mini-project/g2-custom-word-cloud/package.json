@@ -9,7 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@antv/g2": "^5.2.2",
+    "@antv/data-set": "^0.11.8",
+    "@antv/g2": "4.2.11",
     "vue": "^3.4.31"
   },
   "devDependencies": {
