@@ -11,12 +11,10 @@
 ### 2.1 canvas
 1. canvas基础知识：docs和demo
 2. canvas常见应用：mini-project（比如富文本，比如表格）
-> 尝试参与多种开源库进行pr
 
 ### 2.2 three.js
 1. three.js基础知识：docs和demo
 2. three.js常见应用：mini-project（比如高德地图上叠加路线）
-> 尝试自研three.js实现多种数据源的3D构建和2D构建
 
 ### 2.3 webGL
 1. webGL基础知识：docs和demo
@@ -66,9 +64,3 @@ npm run docs:dev
 - [ ]  支持转化为图片逻辑优化: 没有切割完整，还有大量空白的地方
 
 ### 3.2 svg
-
-#### 3.2.1 基于React18实现svg移动、缩放、旋转的demo
-- [ ]  矩形、圆形和菱形的基础svg构建
-- [ ]  移动功能的实现
-- [ ]  旋转功能的实现
-- [ ]  缩放功能的实现
