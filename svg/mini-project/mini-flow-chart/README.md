@@ -1,4 +1,6 @@
-# 基于TypeScript+MobX的流程图构建
+# 基于canvas和svg的高仿WPS的流程图
+
+> 基于TypeScript + Mobx
 
 1. 基础图形内置
 2. 各种复杂场景路线计算的兼容

@@ -70,10 +70,6 @@ export default {
         }
         const radius = 10;
         const path = roundedRectPath(minX, minY, maxX, maxY, radius);
-
-        // https://developer.mozilla.org/zh-CN/docs/Web/SVG/Tutorial/Paths
-        // 绘制路线本质是@antv/G使用svg进行path的绘制！需要有一定规则
-        // 也可以用椭圆A进行绘制，这里就不再尝试了
         container.addShape('path', {
           attrs: {
             path: path,
@@ -82,15 +78,6 @@ export default {
             ...cfg.style
           }
         });
-        // container.addShape('polygon', {
-        //   attrs: {
-        //     ...cfg.style,
-        //     points: points.map(point => [point.x, point.y]),
-        //     fill: hexToRgba(cfg.color|| "#000", 0.16),
-        //     stroke: cfg.color,
-        //     radius: 0.5
-        //   }
-        // });
         return textShape;
       }
     });
