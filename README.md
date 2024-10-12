@@ -1,28 +1,8 @@
-# web2D、web3D电子书
+# 可视化相关
 
+## 1. 目前正在做的事情
 
-## 1. 项目目标
-
-1. 学习`canvas`、`webGL`、`threeJS`、`webGIS`基础知识
-2. 实战相关的应用
-
-## 2. 项目文件说明
-
-### 2.1 canvas
-1. canvas基础知识：docs和demo
-2. canvas常见应用：mini-project（比如富文本，比如表格）
-
-### 2.2 three.js
-1. three.js基础知识：docs和demo
-2. three.js常见应用：mini-project（比如高德地图上叠加路线）
-
-### 2.3 webGL
-1. webGL基础知识：docs和demo
-
-
-## 3. 目前正在做的事情
-
-### 3.1 canvas
+### 1.1 canvas
 
 相关文档：基础、进阶、难点总结
 ```shell
@@ -31,11 +11,9 @@ npm install
 npm run docs:dev
 ```
 
-#### 3.1.1 Vue3 + Vite实现简单的白板
+#### 1.1.1 Vue3 + Vite实现简单的白板
 
 通过[白板项目](https://github.com/wbccb/canvas-web3D/tree/main/canvas/mini-project/mini-whiteboard)，熟练掌握canvas的常见场景编码，培养canvas坐标、滑动、放大缩小等综合性应用的开发能力，掌握常见的canvas优化方案
-
-> 开发进度：
 
 ##### v0.1.0版本
 - [x]  画布背景网格显示
@@ -63,4 +41,6 @@ npm run docs:dev
 - [ ]  增加橡皮擦功能
 - [ ]  支持转化为图片逻辑优化: 没有切割完整，还有大量空白的地方
 
-### 3.2 svg
+### 1.2 richText
+
+[基于TipTap的富文本编辑器](https://github.com/wbccb/visualization-study/tree/main/richText)
