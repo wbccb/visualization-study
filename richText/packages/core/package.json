@@ -1,10 +1,12 @@
 {
   "name": "@blocknote/core",
-  "type": "module",
   "homepage": "https://github.com/TypeCellOS/BlockNote",
   "private": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "license": "MPL-2.0",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "files": [
     "dist",
     "types",
@@ -98,7 +100,6 @@
     "yjs": "^13.6.15"
   },
   "devDependencies": {
-    "@types/node": "^22.7.5",
     "@types/emoji-mart": "^3.0.14",
     "@types/hast": "^2.3.4",
     "@types/uuid": "^8.3.4",

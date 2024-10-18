@@ -20,5 +20,5 @@
     "composite": true,
     "skipLibCheck": true
   },
-  "include": ["./src", "package.json"]
+  "include": ["src"]
 }
