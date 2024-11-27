@@ -1,26 +1,26 @@
 # 可视化相关
 
-## canvas
+## 1.canvas
 
-### demo
+### 1.1 demo
 - base
 - optimization
-### docs
+### 1.2 docs
 - base
 - optimization
 - feature
-### mini-project
+### 1.3 mini-project
 - 白板
 - 基于G2自定义Shape组件实现自定义的词云库
   
-## richText
+## 2.richText
   - 复用[BlockNote v0.17.0](https://github.com/TypeCellOS/BlockNote)版本部分代码进行二次开发的富文本编辑器
 
-## svg
+## 3.svg
 
-### demo
+### 3.1demo
 - viewbox
 
-## threeJs(TODO)
+## 4.threeJs(TODO)
 
-## webGL(TODO)
+## 5.webGL(TODO)
