@@ -8,10 +8,6 @@ const deps = Object.keys(pkg.dependencies);
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  test: {
-    environment: "jsdom",
-    setupFiles: ["./vitestSetup.ts"],
-  },
   plugins: [webpackStats()],
   build: {
     sourcemap: true,

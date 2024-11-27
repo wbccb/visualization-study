@@ -1,6 +1,7 @@
 {
   "name": "@blocknote/core",
   "homepage": "https://github.com/TypeCellOS/BlockNote",
+  "type": "module",
   "private": false,
   "sideEffects": [
     "*.css"
