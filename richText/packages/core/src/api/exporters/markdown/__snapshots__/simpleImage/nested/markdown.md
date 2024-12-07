@@ -1,7 +1,0 @@
-![example]()
-
-Caption
-
-![example]()
-
-Caption
