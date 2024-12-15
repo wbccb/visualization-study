@@ -1,19 +1,17 @@
-# 可视化相关
+# 1.canvas
 
-## 1.canvas
-
-### 1.1 demo
+## 1.1 demo
 
 [canvas基础示例](https://github.com/wbccb/visualization-study/tree/main/canvas/demo/1-base)
 
-### 1.2 docs
+## 1.2 docs
 
 - [canvas基础知识](https://github.com/wbccb/visualization-study/blob/main/canvas/docs/1-base/0-quick-start.md)
 - [着色](https://github.com/wbccb/visualization-study/blob/main/canvas/docs/1-base/1-color.md)
 - [文本](https://github.com/wbccb/visualization-study/blob/main/canvas/docs/1-base/2-text.md)
 - [drawImage](https://github.com/wbccb/visualization-study/blob/main/canvas/docs/1-base/3-image.md)
 
-### 1.3 mini-project
+## 1.3 mini-project
 
 [Vue3 + Vite实现简单的白板](https://github.com/wbccb/visualization-study/tree/main/canvas/mini-project/mini-whiteboard)
 - 画布背景网格显示
@@ -34,15 +32,15 @@
 - 使用polygon绘制矩形（无法实现borderRadius)
 - 使用path模式，根据svg规则，进行二次贝塞尔曲线的绘制
   
-## 2.richText
+# 2.richText
 
 复用[BlockNote v0.20.0](https://github.com/TypeCellOS/BlockNote)版本部分代码进行二次开发的富文本编辑器
 
-## 3.svg
+# 3.svg
 
-### 3.1 demo
+## 3.1 demo
 - [使用viewBox进行缩放](https://github.com/wbccb/visualization-study/blob/main/svg/demo/1-viewbox.html)
 
-### 3.2 pr
+## 3.2 pr
 
-#### 3.2.1 x6
+### 3.2.1 x6
