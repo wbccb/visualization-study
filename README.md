@@ -23,13 +23,8 @@
 ## 3.svg
 
 ### 3.1 demo
-- viewbox
+- [使用viewBox进行缩放](https://github.com/wbccb/visualization-study/blob/main/svg/demo/1-viewbox.html)
 
 ### 3.2 pr
 
-#### 3.2.1 logicFlow
-- [#1923 mouseup相关的pr](mouseup相关的pr的文件夹，可以直接看README.md)
-
-## 4.Three.js(TODO)
-
-## 5.WebGL(TODO)
+#### 3.2.1 x6
