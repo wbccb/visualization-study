@@ -34,7 +34,14 @@
   
 # 2.richText
 
-复用[BlockNote v0.20.0](https://github.com/TypeCellOS/BlockNote)版本部分代码进行二次开发的富文本编辑器
+## 2.1 ProseMirror
+
+## 2.2 Tiptap
+
+## 2.3 BlockNote
+
+- [初始化流程源码分析](https://github.com/wbccb/visualization-study/blob/main/richText/BlockNote/1.%E5%88%9D%E5%A7%8B%E5%8C%96.md)
+- [xl-multi-column源码分析](https://github.com/wbccb/visualization-study/blob/main/richText/BlockNote/2.xl-multi-column%E7%B1%BB%E5%9E%8B.md)
 
 # 3.svg
 
