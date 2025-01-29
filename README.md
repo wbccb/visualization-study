@@ -51,3 +51,8 @@
 ## 3.2 pr
 
 ### 3.2.1 x6
+
+- [issues/3821](https://github.com/wbccb/visualization-study/tree/main/svg/pr/x6-wcb/%233821%20getTeleport%E5%AF%BC%E8%87%B4%E8%8A%82%E7%82%B9%E9%87%8D%E5%A4%8D)
+
+
+
