@@ -34,10 +34,14 @@
   - [x] BackGroundColor复制/黏贴功能完善
   - [x] Color复制/黏贴功能完善
   - [x] TextAlignment复制/黏贴功能完善
-- [ ] 图片功能完善
-  - [ ] 图片上传和对应的FormattingToolBar完善
-  - [ ] 图片+文字的内联模式构建
-
+- [ ] 图片内联功能的构建
+  - [x] ImageLine内联格式的构建和初步显示
+  - [x] resize边框显示
+  - [ ] hover弹出顶部的按钮进行剧中显示
+  - [ ] insertImage相关API的修正
+  - [ ] 图片加载和加载失败的功能
+  - [ ] 修正和测试其它方法，比如renderHTML()、parseHTML()，涉及到复制黏贴和导出等功能
+  - [ ] 细节完善：tooltip实现 + 移入移出的交互优化
 
 ## 后续计划
 - [ ] 复制/黏贴功能完善
