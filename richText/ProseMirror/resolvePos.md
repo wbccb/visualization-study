@@ -42,3 +42,21 @@
 
 由于深度`depth=3`，因此我们可以得到最外层blockGroup位置 `pos - resolvedPos.parentOffset - (resolvedPos.depth-1)`
 
+> 上面的推论是基于只有一个paragraph的情况
+
+
+## 问题总结
+
+### 1. blockGroup位置之谜
+当有多个paragraph时，比如
+```text
+<blockGroup><blockContainer><paragraph>2</blockContainer><blockContainer><paragraph>测试<img></blockContainer></blockGroup>
+```
+
+很奇怪...为什么`</blockContainer>`后面还有一个`</blockGroup>`，但是`</blockGroup>`后面是没有`<blockGroup>`，也就是测试下来是下面的结果
+```text
+<blockGroup><blockContainer><paragraph>2</blockContainer></blockGroup><blockContainer><paragraph>测试<img></blockContainer></blockGroup>
+```
+
+> 难不成是两个`<blockContainer>`之间默认加个1个位置？默认加个空格？
+>
