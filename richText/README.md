@@ -34,7 +34,7 @@
   - [x] BackGroundColor复制/黏贴功能完善
   - [x] Color复制/黏贴功能完善
   - [x] TextAlignment复制/黏贴功能完善
-- [ ] 图片内联功能的构建
+- [x] 图片内联功能的构建
   - [x] ImageLine内联格式的构建和初步显示
   - [x] resize边框显示
   - [x] hover弹出顶部的按钮进行剧中显示

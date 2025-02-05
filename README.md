@@ -36,23 +36,28 @@
 
 ## 2.1 ProseMirror
 
+- [基础概念](https://github.com/wbccb/visualization-study/blob/main/richText/ProseMirror/%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5.md)
+- [resolvePos](https://github.com/wbccb/visualization-study/blob/main/richText/ProseMirror/resolvePos.md)
+- [小细节问题总结](https://github.com/wbccb/visualization-study/blob/main/richText/ProseMirror/%E5%B0%8F%E7%BB%86%E8%8A%82%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93.md)
+- [其它源码文章学习总结](https://github.com/wbccb/visualization-study/blob/main/richText/ProseMirror/%E5%85%B6%E5%AE%83%E6%BA%90%E7%A0%81%E6%96%87%E7%AB%A0%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93.md)
+
+
 ## 2.2 Tiptap
 
-## 2.3 BlockNote
+- [创建一个extension](https://github.com/wbccb/visualization-study/blob/main/richText/Tiptap/1.%20%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AAextension.md)
 
-- [初始化流程源码分析](https://github.com/wbccb/visualization-study/blob/main/richText/BlockNote/1.%E5%88%9D%E5%A7%8B%E5%8C%96.md)
-- [xl-multi-column源码分析](https://github.com/wbccb/visualization-study/blob/main/richText/BlockNote/2.xl-multi-column%E7%B1%BB%E5%9E%8B.md)
+## 2.3 BlockNote-v0.20.0
+
+- [初始化流程源码分析](https://github.com/wbccb/visualization-study/blob/main/richText/BlockNote-v0.20.0/1.%E5%88%9D%E5%A7%8B%E5%8C%96.md)
+- [xl-multi-column源码分析](https://github.com/wbccb/visualization-study/blob/main/richText/BlockNote-v0.20.0/2.xl-multi-column%E7%B1%BB%E5%9E%8B.md)
+- [block类型总结](https://github.com/wbccb/visualization-study/blob/main/richText/BlockNote-v0.20.0/3.block类型总结.md)
+- [TableBlockContent](https://github.com/wbccb/visualization-study/blob/main/richText/BlockNote-v0.20.0/4.TableBlockContent.md)
+- [构建新的数据类型-图片内联](https://github.com/wbccb/visualization-study/blob/main/richText/BlockNote-v0.20.0/5.构建新的数据类型-图片内联.md)
+- [复制黏贴](https://github.com/wbccb/visualization-study/blob/main/richText/BlockNote-v0.20.0/6.复制黏贴.md)
 
 # 3.svg
 
 ## 3.1 demo
 - [使用viewBox进行缩放](https://github.com/wbccb/visualization-study/blob/main/svg/demo/1-viewbox.html)
-
-## 3.2 pr
-
-### 3.2.1 x6
-
-- [issues/3821](https://github.com/wbccb/visualization-study/tree/main/svg/pr/x6-wcb/%233821%20getTeleport%E5%AF%BC%E8%87%B4%E8%8A%82%E7%82%B9%E9%87%8D%E5%A4%8D)
-
 
 
