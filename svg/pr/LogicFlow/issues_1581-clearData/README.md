@@ -29,13 +29,10 @@
 
 
 # 参考
-1. [内存泄漏：前端开发者的噩梦——内存泄露的原因及排查](https://blog.csdn.net/JaneLittle/article/details/132414156?utm_source=chatgpt.com)
-2. [前端内存泄露：原因、后果和预防措施](https://blog.csdn.net/m0_60034136/article/details/136877082?utm_source=chatgpt.com)
-3. [前端内存泄漏和溢出的情况以及解决办法](https://blog.csdn.net/qq_38679823/article/details/132806521?utm_source=chatgpt.com)
-4. [如何查找和解决前端内存泄漏问题？ - 排查和分析技巧详解](https://juejin.cn/post/7232127712642547770)
-5. [Memory Leaks in JavaScript: Understanding and Prevention](https://medium.com/@vikramkadu/memory-leaks-in-javascript-understanding-and-prevention-667835fcc650)
-6. [Memory Leak Detection in Modern Frontend Apps](https://chatgpt.com/c/67ba7c92-1898-8001-ac60-b826cdce748d)
-7. [Memory management](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_management?spm=5aebb161.2ef5001f.0.0.3dff5171UJh1iK)
+1. [如何查找和解决前端内存泄漏问题？ - 排查和分析技巧详解](https://juejin.cn/post/7232127712642547770)
+2. [Memory Leaks in JavaScript: Understanding and Prevention](https://medium.com/@vikramkadu/memory-leaks-in-javascript-understanding-and-prevention-667835fcc650)
+3. [Memory Leak Detection in Modern Frontend Apps](https://dev.to/shcheglov/graphql-non-standard-way-of-selecting-a-client-library-5bid)
+4. [Memory management](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_management?spm=5aebb161.2ef5001f.0.0.3dff5171UJh1iK)
 
 
 
