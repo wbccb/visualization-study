@@ -43,5 +43,4 @@ live-server
 
 使用`canvas`实现的小型应用
 
-### 使用`canvas`实现富文本编辑器
 
