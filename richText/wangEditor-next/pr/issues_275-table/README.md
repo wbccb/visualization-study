@@ -1,3 +1,5 @@
+> 思路记录（可能有些杂乱）
+
 # table 表格内的文本元素重构
 
 > 本质跟BlockNote构建 tableBlock 一样，都需要将内联元素构建成为多个 blocks，然后才能进行对某一个 block 水平居中/垂直居中
@@ -20,11 +22,171 @@
 - issues#334: 表格里加空格会导致空格前面文字的样式丢失
 
 ### issues#338 wps表格插入行，复制到wangEditor，然后操作wangEditor会报错
-> fix(table): fill in the hidden tablecell
+> fix(table): fill in the hidden tableCell
+
+#### 问题分析
+
+如下面所示，有一行 `<tr>` 的 `colspan=4`，它只有一个元素
+
+```html
+<table style="width: auto;table-layout: fixed;height: 100">
+    <colgroup contentEditable="false">
+        <col width=180>
+        </col>
+        <col width=180>
+        </col>
+        <col width=180>
+        </col>
+        <col width=180>
+        </col>
+    </colgroup>
+    <tbody>
+        <tr>
+            <td colspan="4" rowspan="1" width="auto"
+                style="border-width: 1px; border-style: solid; border-color: rgb(204, 204, 204);">
+                <p><br></p>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="1" rowspan="1" width="auto"
+                style="border-width: 1px; border-style: solid; border-color: rgb(204, 204, 204);">
+                <p><span style="font-size: 12pt; font-family: 宋体;"> </span></p>
+            </td>
+            <td colspan="1" rowspan="1" width="auto"
+                style="border-width: 1px; border-style: solid; border-color: rgb(204, 204, 204);">
+                <p><span style="font-size: 12pt; font-family: 宋体;"> </span></p>
+            </td>
+            <td colspan="1" rowspan="1" width="auto"
+                style="border-width: 1px; border-style: solid; border-color: rgb(204, 204, 204);">
+                <p><span style="font-size: 12pt; font-family: 宋体;"> </span></p>
+            </td>
+            <td colspan="1" rowspan="1" width="auto"
+                style="border-width: 1px; border-style: solid; border-color: rgb(204, 204, 204);">
+                <p><br></p>
+            </td>
+        </tr>
+    </tbody>
+</table>
+```
+
+最终 `parseRowHtml()` 生成的 children 也只有一个元素
+```ts
+function parseRowHtml(
+  _elem: DOMElement,
+  children: Descendant[],
+  _editor: IDomEditor,
+): TableRowElement {
+
+  return {
+    type: 'table-row',
+    // @ts-ignore
+    children: children.filter(child => DomEditor.getNodeType(child) === 'table-cell'),
+  }
+}
+```
+
+在 `setSelection()` 选中两个单元格的过程中
+![img.png](img.png)
+
+触发了 `filledMatrix()` 构建出一个数组，其中由于只生成了一个元素，导致部分数据为 undefined ， 如下图所示
+
+![img_1.png](img_1.png)
+
+在遍历 `const [[, path]] = filled[x][y]` 时直接报错，导致异常情况的发生
+```ts
+export function withSelection<T extends Editor>(editor: T) {  
+    editor.apply = (op: Operation): void => {  
+      const filled = filledMatrix(editor, { at: fromPath })
+      //...
+      for (let x = 0; x < filled.length; x += 1) {
+        for (let y = 0; y < filled[x].length; y += 1) {
+          const [[, path]] = filled[x][y]
+  
+          if (Path.equals(fromPath, path)) {
+            from.x = x
+            from.y = y
+          }
+  
+          if (Path.equals(toPath, path)) {
+            to.x = x
+            to.y = y
+            break
+          }
+        }
+      }
+      //...
+    }
+  
+    return editor
+  }
+```
+
+> 问题来了？我可以直接判断为空就 continue 吗？
+
+#### 解决方法
+
+如果 colSpan > 1，检查是否需要构建出足够的 `table-cell`，即 `colSpan` 有多少，就构建出多少个 `tableCell`
+
+```ts
+function parseRowHtml(
+  _elem: DOMElement,
+  children: Descendant[],
+  _editor: IDomEditor,
+): TableRowElement {
+    const tableCellChildren: TableCellElement[] = []
+    for (let i = 0; i < children.length; i += 1) {
+      const child = children[i]
+      // 确保是 table-cell 类型
+      if (DomEditor.getNodeType(child) === 'table-cell') {
+        const tableCell = child as TableCellElement
+        const colSpan = tableCell.colSpan || 1
+        tableCellChildren.push(tableCell) // 先添加当前单元格
+        // 如果 colSpan > 1，检查是否存在足够的隐藏 table-cell
+        for (let j = 1; j < colSpan; j += 1) {
+          const nextChild = children[i + j]
+          if (
+            nextChild
+            && DomEditor.getNodeType(nextChild) === 'table-cell'
+            && (nextChild as TableCellElement).hidden
+          ) {
+            // 已有隐藏的 table-cell，无需补充
+            continue
+          } else {
+            // 补齐缺少的隐藏 table-cell
+            tableCellChildren.push({
+              type: 'table-cell',
+              children: [{ text: '' }],
+              hidden: true,
+            })
+          }
+        }
+      }
+    }
+    
+    return {
+      type: 'table-row',
+      children: tableCellChildren,
+    }
+}
+```
+
+
 
 ### issues#334 表格里加空格会导致空格前面文字的样式丢失
 > fix(table): compatible with table style nesting
 
+
+#### 问题分析
+
+WPS 有一个 TableCell，里面 "A B"，都是红色的文字，复制整个 Table 到 wangEditor 后，会发现，只有 B 这个文字是红色的，A前面的文字颜色丢失
+![img_2.png](img_2.png)
+
+
+#### 解决方法
+
+传入一个 parentStyle？？？`const parentStyle = parseTextElemHtmlToStyle($($elem[0]), editor)`
+
+每一个children都加上 parentStyle??
 
 ## 想要实现效果的源码解析
 
