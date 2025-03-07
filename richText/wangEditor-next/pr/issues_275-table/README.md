@@ -184,9 +184,28 @@ WPS 有一个 TableCell，里面 "A B"，都是红色的文字，复制整个 Ta
 
 #### 解决方法
 
-传入一个 parentStyle？？？`const parentStyle = parseTextElemHtmlToStyle($($elem[0]), editor)`
+如下面所示，`<p>`可以解析出来多个子元素
 
-每一个children都加上 parentStyle??
+![img_6.png](img_6.png)
+
+其中会分解为3个元素
+- `[font, text]`: font 为`测试带空格` + text 为`(后面的空格，为" ")`
+- `[font, text]`: font 为`背景` + text 为`(后面的空格，为" ")`
+- `[font]`: font 为`颜色`
+
+![img_5.png](img_5.png)
+
+
+
+当遇到最后一个元素时，我们由于 children 为空，因此我们会直接解析当前元素，拿到正确的 style
+
+但是当我们遇到非最后一个元素时，由于空格的作用，我们会得到两个元素，这个时候我们只会处理所有子元素当作当前元素的 style ，而忽视了 style 其实在 parentDom ，也就是 span 身上
+
+因此在原来的基础上，将 parentStyle 也加到当前元素的 style 上
+
+![img_7.png](img_7.png)
+
+![img_8.png](img_8.png)
 
 ## 想要实现效果的源码解析
 
