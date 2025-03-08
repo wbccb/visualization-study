@@ -207,8 +207,23 @@ WPS 有一个 TableCell，里面 "A B"，都是红色的文字，复制整个 Ta
 
 ![img_8.png](img_8.png)
 
+
+### issues#152 表格里加空格会导致空格前面文字的样式丢失
+> fix: 修复单元格内的换行在编辑模式下的视觉错误 #264
+> 
+> https://github.com/wangeditor-next/wangEditor-next/issues/152
+
+#### 问题分析
+
+#### 解决方法
+
+
 ## 想要实现效果的源码解析
 
+目前 TableCell 解析还是一个 `<span>`，使用特殊符号进行换行的区分，也就是本质它们还是同一个 block
+![img_9.png](img_9.png)
+
+而在 BlockNote 的 tableBlock结构中，每次换行都会形成一个新的 block
 
 ## 改造tableModule
 
