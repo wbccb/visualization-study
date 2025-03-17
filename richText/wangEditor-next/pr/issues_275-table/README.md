@@ -4,7 +4,6 @@
 
 > 本质跟BlockNote构建 tableBlock 一样，都需要将内联元素构建成为多个 blocks，然后才能进行对某一个 block 水平居中/垂直居中
 
-
 ## 原有的tableModule源码解析
 
 - renderStyle: 传入 node 和 vnode，node 的样式属性 -> vnode 添加样式属性
@@ -215,13 +214,67 @@ WPS 有一个 TableCell，里面 "A B"，都是红色的文字，复制整个 Ta
 
 #### 问题分析
 
+同一个 TableCell 的文本通过换行符进行区分，即下面在编辑模式下是两行
+
+```json
+{
+  "type": "table-cell",
+  "children": [
+    {
+      "text": "多行文字\n加粗"
+    }
+  ]
+}
+```
+
+在进行“加粗”两个字进行真正加粗时，会导致数据结构变为
+
+```json
+{
+  "type": "table-cell",
+  "children": [
+    {
+      "text": "多行文字\n"
+    },
+    {
+      "text": "加粗",
+      "bold": true
+    }
+  ]
+}
+```
+
+> 通过 CSS，可以使用 white-space 属性来控制单元格中的文本是否换行。默认情况下，white-space 的值为 normal，这会允许文本根据需要自动换行。如果想要防止换行，可以将其设置为 nowrap。相反，如果要在表格单元格中启用换行，可以使用 pre-wrap 或 pre-line
+> 
+> white-space: pre-wrap 会保留文本中的空白符（包括空格、制表符和换行符），同时允许文本在容器边界处自动换行 + 这意味着，如果单元格内容中包含 \n，浏览器会将其视为换行符，并在渲染时显示为换行
+
+> 除了 CSS 之外，还可以使用 HTML 的 <br> 标签在单元格中强制换行
+
+注意这里的 children 都是 `<span>` 内联元素！inline元素！！！
+
+![img_12.png](img_12.png)
+
+
+详细点描述就是：
+![img_13.png](img_13.png)
+
+
+在预览模式下，上面的数据会被渲染为：`多行文字<br/>加粗`，因此看起来是正常的！
+
 #### 解决方法
+
+两种方法
+- 改写 tableInline 为 tableCellBlock ，tableInline 的换行是通过 `\n` 的，而 tableCellBlock 可以通过多个 block 实现换行
+- 表格中的换行改为非 `\n` 模式
 
 
 ## 想要实现效果的源码解析
 
 目前 TableCell 解析还是一个 `<span>`，使用特殊符号进行换行的区分，也就是本质它们还是同一个 block
 ![img_9.png](img_9.png)
+
+
+
 
 而在 BlockNote 的 tableBlock结构中，每次换行都会形成一个新的 block
 
