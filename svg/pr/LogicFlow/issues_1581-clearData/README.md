@@ -10,7 +10,7 @@
 
 使用最新的代码，但是 Memory 仍然无法释放
 
-## 解决思路
+## 思考
 
 两个方向:
 1. 上面的pr的修复是有效的，但是仍然没有修复干净
@@ -21,40 +21,34 @@
 1. 我们按照上面pr修复思路再去检查demo的一些代码是否发生了内存泄露
 2. 使用一些内存泄露的工具检测（比如[MemLab](https://github.com/facebook/memlab?spm=5aebb161.2ef5001f.0.0.3dff5171UJh1iK))
 
-## 开始排查
+## 问题排查进展
 
 经过[vue3-app](https://github.com/didi/LogicFlow/tree/master/examples/vue3-app)的运行发现，[pull#1993](https://github.com/didi/LogicFlow/pull/1993)确实是有效的，但是存在两个问题
 - 只处理 `vue3-app` 中 `node` 的内存回收处理，并没有处理 `node` + `edge` 的模式
 -  `vue3-app` 中 `node` 的内存能够回收90%以上，但是仍然存在一些内存泄露，造成 Memory 仍然每次清除后会小幅增加内存 => 多次 clear 后，内存泄露还是很明显的
 
-## 接下来的思路
-
-1. 阅读一定的文献，使用一些工具，排查出具体源码内存泄露的位置（因为代码太多了，不可能一个一个文件去看）
-
-2. 仿造[pull#1993](https://github.com/didi/LogicFlow/pull/1993)和[pull#2004](https://github.com/didi/LogicFlow/pull/2004)先对 `edge` 进行内存泄露的处理
-- 可以先通过不断屏蔽提交代码确定内存泄露最大的地方
-- 检测提交代码是否有冗余没用的部分
-3. 根据工具排查，对剩余的一些内存泄露地方进行优化处理
-
-最终还是通过 Memory 进行验证内存泄露是否处理干净
-
-## 开始排查
-
-### 工具分析泄露位置
-
-#### node
+## 思考
 
 **谷歌浏览器的工具-Memory:**
+1. 发现`History.ts`中有保存一些数据导致内存无法被清除
+2. 发现在[vue3-app](https://github.com/didi/LogicFlow/tree/master/examples/vue3-app)中每次新增数据后->clearData->新增数据都会报错，是不是哪里的数据没清除导致的问题？
 
-- `{id, type, x, y, properties}`：是什么地方？
+## 问题排查进展
+1. 将`History.ts`的代码暂时全部省略
+2. 发现是`id.value`没有重置赋值导致的问题，跟内存泄露无关
 
 
-#### edge
+## 思考
+**谷歌浏览器的工具-Memory:**
+1. 将`History.ts`的代码暂时全部省略后的`clearData`效果明显，每次只增加2MB左右（无论是1000个DOM还是5000个DOM，说明node和edge并不是内存泄露的主要原因）
+2. 增加`History.ts`的代码后，每次会从增加2MB->增加4MB，但是clearData效果仍然明显
+------
+得出结论：
+- `History.ts`是否有保存错误的数据的逻辑？正常就是保存undos的数据而已，是不是把监听器数据也保存进来了？
+- 除去`History.ts`的数据缓存增加，还有什么地方导致了内存的泄露问题？
 
-### 仿造pr进行edge改造
 
 
-### 工具分析位置继续修复node还没修复的部分 + edge还没修复的部分
 
 
 # 参考
@@ -62,6 +56,7 @@
 2. [Memory Leaks in JavaScript: Understanding and Prevention](https://medium.com/@vikramkadu/memory-leaks-in-javascript-understanding-and-prevention-667835fcc650)
 3. [Memory Leak Detection in Modern Frontend Apps](https://dev.to/shcheglov/graphql-non-standard-way-of-selecting-a-client-library-5bid)
 4. [Memory management](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_management?spm=5aebb161.2ef5001f.0.0.3dff5171UJh1iK)
+5. https://juejin.cn/post/7377247135006457890
 
 
 
