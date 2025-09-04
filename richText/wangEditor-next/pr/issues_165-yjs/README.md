@@ -617,15 +617,323 @@ export function absolutePositionToSlatePoint(
 }
 ```
 
-###### 1.4.1.1 getSlatePath()
+getSlatePath 先向上构建 Y.js 父节点路径，再向下逐级映射到 Slate 的 path 路径（yOffsetToSlateOffsets 负责将偏移量精准地定位到 Slate 的子节点和文本中）
+> 接下来我们将针对这两个方法展开详细分析
+
+---------------------------------------------------------------
+
+`getSlatePath()` 分为两个部分：
+- 向上递归遍历构建出`path`对应的节点数组`yNodePath`，`index=0`从根节点开始
+- 遍历数组`yNodePath`，构建出具体的`path`
+
+```ts
+
+export function getSlatePath(sharedRoot: Y.XmlText, slateRoot: Node, yText: Y.XmlText): Path {
+  const yNodePath = [yText]
+
+  while (yNodePath[0] !== sharedRoot) {
+    const { parent: yParent } = yNodePath[0]
+    yNodePath.unshift(yParent)
+  }
+  let slateParent = slateRoot
+  return yNodePath.reduce<Path>((path, yParent, idx) => {
+    const yChild = yNodePath[idx + 1]
+    if (!yChild) {
+      return path
+    }
+    let yOffset = 0
+    const currentDelta = yTextToInsertDelta(yParent)
+    for (const element of currentDelta) {
+      if (element.insert === yChild) {
+        break
+      }
+      yOffset += typeof element.insert === 'string' ? element.insert.length : 1
+    }
+    if (Text.isText(slateParent)) {
+      throw new Error('Cannot descent into slate text')
+    }
+    const [pathOffset] = yOffsetToSlateOffsets(slateParent as Element, yOffset)
+    slateParent = slateParent.children[pathOffset]
+    return path.concat(pathOffset)
+  }, [])
+}
+```
+
+举一个具体的示例
+```json
+[
+  {
+    "type": "paragraph", // 路径 [0]
+    "children": [
+      {
+        "text": "Hello, " // 路径 [0, 0]
+      },
+      {
+        "type": "mention", // 路径 [0, 1]
+        "children": [
+          { "text": "我是光标左边，我是光标右边" } // 路径 [0, 1, 0]
+        ]
+      },
+      {
+        "text": "World!" // 路径 [0, 2]
+      }
+    ]
+  },
+  {
+    "type": "block-quote", // 路径 [1]
+    "children": [
+      {
+        "text": "This is a quote." // 路径 [1, 0]
+      }
+    ]
+  }
+]
+```
+
+当目标节点是`yTextMention`的内部文本的某一个位置时，我们直接从上面json可以知道，光标对应的path 就是 path = `[0, 1, 0]`，textOffset = 6
 
 
-###### 1.4.1.2 yOffsetToSlateOffsets()
+`getSlatePath()`分为两个阶段：
+- 向上追溯Y.js路径，我们可以得到 `yNodePath` = `[sharedRoot, yTextParagraph, yTextMention]`，就是 `[根节点, 目标节点的parent节点的parent, 目标节点的parent节点, 目标节点]`
+- 向下映射到 Slate 路径，遍历 `yNodePath`
+  - 第一次遍历获取到 `yParent` = `sharedRoot`，`yChild` = `yTextParagraph`，对`yParent`调用`yTextToInsertDelta()`进行第一层元素的平铺，最终形成`currentDelta` = `[{ insert: yTextParagraph }, { insert: yTextBlockQuote }]`
+  - 寻找 `yChild` 在 `currentDelta` 的偏移量（注意：这里还不是 Slate Path 的偏移量，是文本元素等于 `element.insert.length`，其它元素长度等于 `1` 来计算的 Y.js 的偏移量） 
+  - 根据 `slateParent` 和 `yOffset` 来计算出对应的`slate节点`的`childrenIndex` = `pathOffset`(取`yOffsetToSlateOffsets()`返回的数组的第一个元素lastNonEmptyPathOffset)，得到slateParent = `yTextParagraph`对应的`slate节点`，将pathOffset加入到`path数组`中，然后更新`slateParent`为`目标节点的parent节点的parent` => path 就是 `[0]`
+  - 继续遍历，拿出 `yParent` = `yTextParagraph`，`yChild` = `yTextMention`，此时 `slateParent`等于 `yTextParagraph`对应的slate节点，继续上面3个步骤，计算出`path数组`的下一个值，然后更新`slateParent`，继续循环 => path 就是 `[0, 1]`
+  - 继续遍历，拿出 `yParent` = `yTextMention`，`yChild` = `yText`= null，结束循环，返回path
 
+注意：此时拿到的 `path` 是 `[0, 1]`
 
+```ts
+function yOffsetToSlateOffsets(
+  parent: Element,
+  yOffset: number,
+  opts: { assoc?: number; insert?: boolean } = {},
+): [number, number] {
+  const { assoc = 0, insert = false } = opts
+  let currentOffset = 0
+  let lastNonEmptyPathOffset = 0
+  for (let pathOffset = 0; pathOffset < parent.children.length; pathOffset += 1) {
+    const child = parent.children[pathOffset]
+    const nodeLength = Text.isText(child) ? child.text.length : 1
+    if (nodeLength > 0) {
+      lastNonEmptyPathOffset = pathOffset
+    }
+    const endOffset = currentOffset + nodeLength
+    if (nodeLength > 0 && (assoc >= 0 ? endOffset > yOffset : endOffset >= yOffset)) {
+      return [pathOffset, yOffset - currentOffset]
+    }
+    currentOffset += nodeLength
+  }
+  if (insert) {
+    return [parent.children.length, 0]
+  }
+  const child = parent.children[lastNonEmptyPathOffset]
+  const textOffset = Text.isText(child) ? child.text.length : 1
+  return [lastNonEmptyPathOffset, textOffset]
+}
+```
 
+回到我们的`absolutePositionToSlatePoint()`，当我们使用`getSlatePath`拿到`path` = `[0, 1]` 时，我们会使用传入的`Y.AbsolutePosition`的`index`进行进一步的`yOffsetToSlateOffsets`计算获取对应的偏移值
+
+```ts
+export function absolutePositionToSlatePoint(
+  sharedRoot: Y.XmlText,
+  slateRoot: Node,
+  { type, index, assoc }: Y.AbsolutePosition,
+): BasePoint | null {
+  const parentPath = getSlatePath(sharedRoot, slateRoot, type)
+  const parent = Node.get(slateRoot, parentPath)
+  
+  const [pathOffset, textOffset] = yOffsetToSlateOffsets(parent, index, {
+    assoc,
+  })
+  const target = parent.children[pathOffset]
+
+  if (!Text.isText(target)) {
+    return null
+  }
+
+  return { path: [...parentPath, pathOffset], offset: textOffset }
+}
+```
+
+此时的 `parent` = `yTextMention`，`index` = 6
+
+我们获取`parent.children` = `"text": "我是光标左边，我是光标右边"`, `Text.isText(child)`为true，返回`[pathOffset, yOffset - currentOffset]`
+
+此时
+- `pathOffset` = 0
+- `yOffset - currentOffset` = 6
+
+```ts
+function yOffsetToSlateOffsets(
+  parent: Element,
+  yOffset: number,
+  opts: { assoc?: number; insert?: boolean } = {},
+): [number, number] {
+  const { assoc = 0, insert = false } = opts
+  let currentOffset = 0
+  let lastNonEmptyPathOffset = 0
+  for (let pathOffset = 0; pathOffset < parent.children.length; pathOffset += 1) {
+    const child = parent.children[pathOffset]
+    const nodeLength = Text.isText(child) ? child.text.length : 1
+    if (nodeLength > 0) {
+      lastNonEmptyPathOffset = pathOffset
+    }
+    const endOffset = currentOffset + nodeLength
+    if (nodeLength > 0 && (assoc >= 0 ? endOffset > yOffset : endOffset >= yOffset)) {
+      return [pathOffset, yOffset - currentOffset]
+    }
+    currentOffset += nodeLength
+  }
+  //...
+}
+```
+
+回到`absolutePositionToSlatePoint()`，获取`target`判断是否为文本元素，然后合并`path`，最终
+- `parentPath` = `[0, 1]`
+- `pathOffset` = 0
+- `textOffset` = 6
+返回`{path: [0, 1, 0], offset: 6}`
+
+```ts
+const target = parent.children[pathOffset]
+if (!Text.isText(target)) {
+  return null
+}
+return { path: [...parentPath, pathOffset], offset: textOffset }
+```
 
 ##### 1.4.2 getOverlayPosition()
+
+经过`getCursorRange()`的计算，我们已经能够拿到目前光标的位置数据`{path: [0, 1, 0], offset: 6}`
+
+```ts
+// packages/yjs-for-react/src/hooks/useRemoteCursorOverlayPositions.tsx
+const cursorStates = useRemoteCursorStates<TCursorData>()
+
+const updated = Object.fromEntries(
+  Object.entries(cursorStates).map(([key, state]) => {
+    const range = state.relativeSelection && getCursorRange(editor, state)
+
+    if (!range) {
+      return [key, FROZEN_EMPTY_ARRAY]
+    }
+
+    const cached = overlayPositionCache.current.get(range)
+
+    if (cached) {
+      return [key, cached]
+    }
+
+    // 对rang范围发生改变的位置进行重新cursorPos的计算
+    // 由于重新计算是一个耗时的操作，因此这里用了缓存处理位置的计算
+    const overlayPosition = getOverlayPosition(editor, range, {
+      xOffset,
+      yOffset,
+      shouldGenerateOverlay,
+    })
+
+    overlayPositionsChanged = true
+    overlayPositionCache.current.set(range, overlayPosition)
+    return [key, overlayPosition]
+  })
+)
+```
+
+根据`range`（有起点和终点）直接使用`slate`的API进行DOM的获取
+> isBackward代表选区是从左到右，还是从右到左选区
+
+然后构建出对应的`selectionRects`和`caretPosition`数据
+
+```ts
+function getOverlayPosition(
+  editor: IDomEditor,
+  range: BaseRange,
+  { yOffset, xOffset, shouldGenerateOverlay }: GetSelectionRectsOptions,
+): OverlayPosition {
+  const [start, end] = Range.edges(range)
+  const domRange = reactEditorToDomRangeSafe(editor, range)
+
+  if (!domRange) {
+    return {
+      caretPosition: null,
+      selectionRects: [],
+    }
+  }
+
+  const selectionRects: SelectionRect[] = []
+  const nodeIterator = Editor.nodes(editor, {
+    at: range,
+    match: (n, p) => Text.isText(n) && (!shouldGenerateOverlay || shouldGenerateOverlay(n, p)),
+  })
+
+  let caretPosition: CaretPosition | null = null
+  const isBackward = Range.isBackward(range)
+
+  for (const [node, path] of nodeIterator) {
+    const domNode = DomEditor.toDOMNode(editor, node)
+
+    const isStartNode = Path.equals(path, start.path)
+    const isEndNode = Path.equals(path, end.path)
+
+    let clientRects: DOMRectList | null = null
+
+    if (isStartNode || isEndNode) {
+      const nodeRange = document.createRange()
+
+      nodeRange.selectNode(domNode)
+
+      if (isStartNode) {
+        nodeRange.setStart(domRange.startContainer, domRange.startOffset)
+      }
+      if (isEndNode) {
+        nodeRange.setEnd(domRange.endContainer, domRange.endOffset)
+      }
+
+      clientRects = nodeRange.getClientRects()
+    } else {
+      clientRects = domNode.getClientRects()
+    }
+
+    const isCaret = isBackward ? isStartNode : isEndNode
+
+    for (let i = 0; i < clientRects.length; i += 1) {
+      const clientRect = clientRects.item(i)
+
+      if (!clientRect) {
+        continue
+      }
+
+      const isCaretRect = isCaret && (isBackward ? i === 0 : i === clientRects.length - 1)
+
+      const top = clientRect.top - yOffset
+      const left = clientRect.left - xOffset
+
+      if (isCaretRect) {
+        caretPosition = {
+          height: clientRect.height,
+          top,
+          left: left + (isBackward || Range.isCollapsed(range) ? 0 : clientRect.width),
+        }
+      }
+
+      selectionRects.push({
+        width: clientRect.width,
+        height: clientRect.height,
+        top,
+        left,
+      })
+    }
+  }
+
+  return {
+    selectionRects,
+    caretPosition,
+  }
+}
+```
 
 
 ### 2. @wangeditor-next/yjs-react
