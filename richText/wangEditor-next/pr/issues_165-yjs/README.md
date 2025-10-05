@@ -1200,5 +1200,282 @@ return {
 
 
 
+### 5. 根据yjs-react再次检查yjs-vue的代码逻辑，并移植到wangEditor-next中
 
-### 5. 补全 yjs-vue3 相关的说明文档和测试用例
+1. 根据yjs-react再次检查yjs-vue的代码逻辑，包括代码和注释
+2. 移植yjs-for-wangEditor-vue3到wangEditor-next中，并且使用同样的rollup打包
+   - rollup进行打包prod，观看打包过程是否正常，与yjs-react打包出来的产物是否相同
+   - 验证开发环境：yjs-vue进行js文件的打包行成，然后在example/frontend-vue3中使用验证
+3. 写pr提交说明.md，准备发起pr
+
+
+#### 5.1 根据yjs-react再次检查yjs-vue的代码逻辑，包括代码和注释
+
+```ts
+export { EditorContext, useEditorStatic } from './hooks/use-editor-static'
+export {
+  CursorOverlayData,
+  useRemoteCursorOverlayPositions,
+  UseRemoteCursorOverlayPositionsOptions,
+} from './hooks/useRemoteCursorOverlayPositions'
+export { useRemoteCursorStates, useRemoteCursorStatesSelector } from './hooks/useRemoteCursorStates'
+export { getCursorRange } from './utils/getCursorRange'
+```
+
+```ts
+export type Store<T> = readonly [(onStoreChange: () => void) => () => void, () => T]
+```
+
+##### ✅5.1.1 Store没有暴露出去
+
+在`yjs-for-react`中，有这么一个类型声明，但是`yjs-for-vue`中未构建对应的类型
+
+```ts
+// packages/yjs-for-react/src/types.ts
+export type Store<T> = readonly [(onStoreChange: () => void) => () => void, () => T]
+
+// packages/yjs-for-react/src/hooks/useRemoteCursorStateStore.ts
+export type CursorStore<TCursorData extends Record<string, unknown> = Record<string, unknown>> =
+  Store<Record<string, CursorState<TCursorData>>>
+```
+
+这是为了emit出去React的`[state, setState]`
+```ts
+const [subscribe, getSnapshot] = useRemoteCursorStateStore<TCursorData>()
+```
+
+但是Vue3是不需要emit这种格式，直接emit响应式数据即可，因此这个接口返回的数据类型直接就是`subscribe`，也就是`Record<string, CursorState<TCursorData>>`，而不是`Store<Record<string, CursorState<TCursorData>>`
+
+
+
+##### ✅5.1.2 EditorContext和useEditorStatic没有暴露出去
+
+yjs-for-react 使用了 React中的 Context 概念，也就是在底层传入Editor的模式
+
+> 虽然vue3-demo：https://stackblitz.com/edit/vue3-wangeditor-demo-8emmc7?file=src%2FApp.vue
+> 
+> 没有直接使用useContext的能力（包括React-demo也没有），但是这里作为一个能力，应该保持一致
+
+
+在`yjs-for-react`的`examples`中
+```tsx
+<EditorContext.Provider value={editor}>
+  <div style={{ border: '1px solid #ccc', zIndex: 100 }}>
+    <Toolbar
+      editor={editor}
+      defaultConfig={toolbarConfig}
+      mode="default"
+      style={{ borderBottom: '1px solid #ccc' }}
+    />
+    <RemoteCursorOverlay>
+      <Editor
+        defaultConfig={editorConfig}
+        value={html}
+        onCreated={setEditor}
+        onChange={innerEditor => setHtml(innerEditor.getHtml())}
+        mode="default"
+        style={{ height: '500px', innerWidth: '100%', overflowY: 'hidden' }}
+      />
+    </RemoteCursorOverlay>
+  </div>
+  <div style={{ marginTop: '15px' }}>{html}</div>
+  <div style={{ marginTop: '15px' }}>{editor && JSON.stringify(editor.selection)}</div>
+</EditorContext.Provider>
+```
+
+> 因为React使用`useContext()`是因为需要嵌套很多层，因此为了不用一只传递`props`，所以才在最外层使用`useContext()`
+
+
+在Vue3中，我们不需要构建那么多层，是不是可以声明Context能力，但是不在内部使用useContext呢？
+
+```ts
+import { defineComponent, inject, type PropType, type ShallowRef, provide } from "vue";
+import type { IDomEditor } from "@wangeditor-next/editor";
+
+const EDITOR_CONTEXT_KEY = Symbol("editorContext");
+
+export const useEditorStatic = (): ShallowRef<IDomEditor | null> | null => {
+  const editor = inject<ShallowRef<IDomEditor | null> | null>(EDITOR_CONTEXT_KEY, null);
+  if (!editor) {
+    // 如果外部没有provide(ShallowRef)，则报错
+    console.warn(
+      "The `useEditorStatic` composable must be used inside the <EditorContextProvider> component's context.",
+    );
+  }
+  return editor;
+};
+
+export const EditorContextProvider = defineComponent({
+  name: "EditorContextProvider",
+  props: {
+    editor: {
+      type: Object as PropType<ShallowRef<IDomEditor | null>>,
+      required: true,
+    },
+  },
+  setup(props, { slots }) {
+    provide(EDITOR_CONTEXT_KEY, props.editor);
+    return () => slots.default?.();
+  },
+});
+```
+
+
+
+##### ✅5.1.3 createRemoteCursorStateStore() -> getCursorStateStore() -> useRemoteCursorStateStore() -> useRemoteCursorStates()
+
+在`yjs-for-react`中，实现的计算方法在`createRemoteCursorStateStore()`中，并且拆分为多个方法，只要是
+- `subscribe(onStoreChange)`: 传入`onStoreChange`，在y.js变化的时候，会触发`onStoreChange()` + 将y.js变化的数据存储在changed中 => `onStoreChange()`会触发`getSnapshot()`
+- `getSnapshot()`：遍历之前存储的y.js的event事件（也就是`onStoreChange()`时顺便存储的事件），然后重新计算每一个cursor的state数据
+
+> `useSyncExternalStore(subscribe, getSnapshot)` 的工作原理：当subscribe(onStoreChange)传入`onStoreChange()`触发时，会自动触发第二个参数`getSnapshot()`
+
+
+
+而在`yjs-for-vue`中，不用经历如此复杂的链路，在`useRemoteCursorStates()`中直接监听Y.js的变化，然后直接改变`cursors`(响应式对象)即可
+
+
+
+##### ✅5.1.4 CursorOverlayData & useRemoteCursorOverlayPositions & UseRemoteCursorOverlayPositionsOptions & getCursorRange都有暴露出去
+
+
+问题1: 其它逻辑基本都统一了，就是`requestRerender()`传递的参数无法统一
+```ts
+useOnResize(refreshOnResize ? containerRef : undefined, () => {
+    overlayPositionCache.current = new WeakMap()
+    requestRerender(refreshOnResize !== 'debounced')
+})
+const refresh = useCallback(() => {
+    overlayPositionCache.current = new WeakMap()
+    requestRerender(true)
+}, [requestRerender])
+
+export function useRequestRerender() {
+  const [, rerender] = useReducer(s => s + 1, 0)
+  const animationFrameIdRef = useRef<number | null>(null)
+
+  const clearAnimationFrame = () => {
+    if (animationFrameIdRef.current) {
+      cancelAnimationFrame(animationFrameIdRef.current)
+      animationFrameIdRef.current = 0
+    }
+  }
+
+  useEffect(clearAnimationFrame)
+  useEffect(() => clearAnimationFrame, [])
+
+  return useCallback((immediately = false) => {
+    if (immediately) {
+      rerender()
+      return
+    }
+
+    if (animationFrameIdRef.current) {
+      return
+    }
+
+    animationFrameIdRef.current = requestAnimationFrame(rerender)
+  }, [])
+}
+```
+
+Vue3不用这种强制setState的模式来触发重新渲染 => 重新触发cursorPosition的计算
+
+
+
+------------------------------
+
+问题2:
+1. React 的 useLayoutEffect 是每次 render 后都执行（只要依赖变化），而且 首次 mount 也会执行 => watch(cursors.value, ...) 必须加`immediate: true`才能首次执行
+2. 在 React 中，useLayoutEffect 确保 在浏览器 paint 之前同步计算 overlay 位置，避免闪烁 ===> watch(cursors.value, ...) 是 异步的（默认在 nextTick 后执行）
+
+> cursorStates 变化 → 组件 re-render → useLayoutEffect 被调用
+
+
+跟React的useLayoutEffect相同逻辑，只是Vue不需要重新渲染，只需要监听依赖的数据
+
+我们Vue3中使用`watch()` + `flush: "sync"` + `immediate: "true"` 的模式重写 useLayoutEffect、
+
+当前这里，有一个可能比较疑惑的地方
+
+当容器尺寸变化会触发：
+```ts
+const observer = new ResizeObserver(() => {
+  // 尺寸变化时触发
+  computeOverlayPosition(cursors.value);
+});
+```
+
+当`cursors`数据变化 / `containerRef.value`从null→ DOM / 容器被替换（如 v-if）===> 会触发：
+```ts
+  watch(
+    () => [cursors.value, containerRef?.value],
+    () => {
+      if (!editorRef.value) return;
+      // 重新计算overlayPosition
+      computeOverlayPosition(cursors.value);
+    },
+    {
+      immediate: true,
+      flush: "sync",
+    },
+  );
+```
+
+而且computeOverlayPosition()有使用缓存overlayPositionCache，即使跟observer.observe(element)重复触发，也不会如何
+
+
+##### ✅5.1.5 useRemoteCursorStates有暴露出去，但是useRemoteCursorStatesSelector没有暴露出去
+
+```ts
+export function useRemoteCursorStates<
+  TCursorData extends Record<string, unknown> = Record<string, unknown>,
+>() {
+  const [subscribe, getSnapshot] = useRemoteCursorStateStore<TCursorData>()
+
+  return useSyncExternalStore(subscribe, getSnapshot)
+}
+
+export function useRemoteCursorStatesSelector<
+  TCursorData extends Record<string, unknown> = Record<string, unknown>,
+  TSelection = unknown,
+>(
+  selector: (cursors: Record<string, CursorState<TCursorData>>) => TSelection,
+  isEqual?: (a: TSelection, b: TSelection) => boolean,
+): TSelection {
+  const [subscribe, getSnapshot] = useRemoteCursorStateStore<TCursorData>()
+
+  return useSyncExternalStoreWithSelector(subscribe, getSnapshot, null, selector, isEqual)
+}
+```
+
+`useRemoteCursorStatesSelector`是React支持颗粒度的选择器，支持部分数据变化才触发重新渲染
+
+
+> 在 Vue 3 中，确实通常不需要像 React 那样显式提供 selector 或封装 store，因为 Vue 的响应式系统天然支持细粒度更新。
+> 
+> 直接暴露 cursors 响应式引用，让用户自行 computed 或在模板中按需使用，是更符合 Vue 习惯、更简洁且高效的做法。 
+
+
+因此Vue 3 直接返回`cursors`而不是返回`store=[state, setState]`是合理、简洁且符合框架理念的，不需要强行模仿 React 的 selector 和 store 模式：
+✅ 不提供 selector：正确！Vue 的响应式系统自动处理细粒度更新。
+✅ 不抽离 store：正确！每个组件独立管理自己的响应式状态是 Vue 的常见模式。
+
+结论：Vue3版本可以不返回useRemoteCursorStatesSelector，因此useRemoteCursorStates不需要跟React一样返回一个store，而是一个cursors即可！
+
+
+---------------------
+
+
+#### 5.2 移植yjs-for-vue3到项目中，打包测试 
+
+- 检查dev版本，能否直接开发环境运行进行调试
+- 检查prod版本，能否build成为一个js文件，并与目前的打包模式进行对比检查是否有遗漏的地方
+
+
+
+
+#### 5.3 demo功能对比
+
+
+#### 5.4 写pr提交说明.md，准备发起pr
