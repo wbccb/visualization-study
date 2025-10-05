@@ -1473,6 +1473,14 @@ export function useRemoteCursorStatesSelector<
 - 检查prod版本，能否build成为一个js文件，并与目前的打包模式进行对比检查是否有遗漏的地方
 
 
+主要提交
+- feat: yjs-for-vue集成到项目中
+- fix: yjs-for-vue的typescript相关报错修复
+- feat: yjs-for-vue的demo本地客户端运行成功
+- feat: yjs-for-vue的demo本地服务器运行成功（使用yarn@4版本）
+- fix: 修复因为前面改动导致协同编辑光标失效的问题
+> fix: 界面滚动时，光标没有实时滚动更新的问题
+
 
 
 #### 5.3 demo功能对比
