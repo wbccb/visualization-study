@@ -1473,15 +1473,29 @@ export function useRemoteCursorStatesSelector<
 - 检查prod版本，能否build成为一个js文件，并与目前的打包模式进行对比检查是否有遗漏的地方
 
 
-主要提交
+打包测试-主要提交
 - feat: yjs-for-vue集成到项目中
 - fix: yjs-for-vue的typescript相关报错修复
 - feat: yjs-for-vue的demo本地客户端运行成功
 - feat: yjs-for-vue的demo本地服务器运行成功（使用yarn@4版本）
 - fix: 修复因为前面改动导致协同编辑光标失效的问题
-> fix: 界面滚动时，光标没有实时滚动更新的问题
+
+> 注意：测试yjs-for-vue记得build，因为我们测试的是js文件
+
+如果不考虑pnpm和yarn的冲突问题，即先使用pnpm打包，然后去掉package.json的`"packageManager": "pnpm@9.15.0"`，然后用yarn运行demo，是可以运行成功的！
+
+##### 5.2.1 pnpm和yarn的冲突问题
+
+1. examples/frontend使用yarn
+2. 但是其它module使用pnpm进行管理
+
+- 冲突1: 如果examples/frontend都使用pnpm，会导致`y-websocket`一直无法启动成功
+- 冲突2: 如果都使用yarn，会破坏目前的工程化结构
+- 冲突3: 如果examples/frontend使用yarn，其它使用pnpm，会因为package.json的`"packageManager": "pnpm@9.15.0"`一直报错
 
 
+##### 5.2.2 界面滚动时，光标没有实时滚动更新的问题
+> react版本也没有解决这个问题
 
 #### 5.3 demo功能对比
 
