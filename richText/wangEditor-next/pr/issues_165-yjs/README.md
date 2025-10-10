@@ -1484,7 +1484,7 @@ export function useRemoteCursorStatesSelector<
 
 如果不考虑pnpm和yarn的冲突问题，即先使用pnpm打包，然后去掉package.json的`"packageManager": "pnpm@9.15.0"`，然后用yarn运行demo，是可以运行成功的！
 
-##### 5.2.1 pnpm和yarn的冲突问题
+##### ✅5.2.1 pnpm和yarn的冲突问题
 
 1. examples/frontend使用yarn
 2. 但是其它module使用pnpm进行管理
@@ -1494,8 +1494,35 @@ export function useRemoteCursorStatesSelector<
 - 冲突3: 如果examples/frontend使用yarn，其它使用pnpm，会因为package.json的`"packageManager": "pnpm@9.15.0"`一直报错
 
 
+###### ✅5.2.1.1 尝试都使用pnpm，解决`y-websocket`的启动问题
+
+`packages/yjs/examples/frontend-vue3`放在`packages/yjs`的`example`
+
+所以`packages/yjs/examples/frontend-vue3`的package.json会提升到`packages/yjs`的`node_modules` 
+- 现在之所以无法触发`pnpm exec y-websocket --port 1234 --path /wangeditor-next-yjs`，是因为`packages/yjs`的`package.json`没有这个`y-websocket`的依赖，增加到devDependencies即可
+
+##### ✅5.2.1.2 完善工程化
+
+1. `--ignore-workspace`按照依赖才能阻止当前example使用上层的node_modules，会导致很多依赖问题（比如上层没安装，也就是yjs没安装一些调试依赖）
+2. 需要先监听yjs-for-vue的build成为js文件，然后才能启动webSocket服务器 + 本地客户端
+
+```shell
+  "scripts": {
+    "install-ignore-workspace": "pnpm install --ignore-workspace",
+    "yjs-for-vue:watch": "pnpm --dir ../../../yjs-for-vue run dev-watch",
+    "dev-client": "vite --force",
+    "dev-server": "pnpm exec y-websocket --port 1234 --path /wangeditor-next-yjs",
+    "dev:all": "pnpm run dev-server & pnpm run dev-client",
+    "eslint-fix": "pnpm exec eslint --fix src/   "
+  },
+```
+
+
+
 ##### 5.2.2 界面滚动时，光标没有实时滚动更新的问题
 > react版本也没有解决这个问题
+
+
 
 #### 5.3 demo功能对比
 
