@@ -1519,12 +1519,66 @@ export function useRemoteCursorStatesSelector<
 
 
 
-##### 5.2.2 界面滚动时，光标没有实时滚动更新的问题
+##### ✅5.2.2 界面滚动时，光标没有实时滚动更新的问题
 > react版本也没有解决这个问题
+
+
+###### 5.2.2.1 验证containerRef改变是否会导致变化
+
+手动改变`<div id="app"></div>`的`width:100px`，确认会触发cursor的重新计算
+
+
+###### 5.2.2.2 如何监听scroll事件去更新cursor
+
+```ts
+const handleScroll = () => {
+    overlayPositionCache = new WeakMap()
+    if (rafId) {
+      cancelAnimationFrame(rafId)
+    }
+    rafId = requestAnimationFrame(() => {
+      computeOverlayPosition(cursors.value)
+    })
+  }
+
+  watch(
+    () => editorRef.value,
+    (newEditor, oldEditor) => {
+      if (oldEditor) {
+        oldEditor.off('scroll', handleScroll)
+      }
+      if (newEditor) {
+        newEditor.on('scroll', handleScroll)
+      }
+    },
+    {
+      immediate: true,
+    },
+  )
+
+  onUnmounted(() => {
+    if (editorRef.value) {
+      editorRef.value.off('scroll', handleScroll)
+    }
+  })
+```
 
 
 
 #### 5.3 demo功能对比
 
+✅1. 协同编辑功能展示
+✅2. 光标变化展示
+✅3. 选中文字展示
+
+
 
 #### 5.4 写pr提交说明.md，准备发起pr
+
+看`pr提交说明.md`
+
+
+
+## 可能还存在的问题
+
+1. `"dev-watch": "cross-env NODE_ENV=development rollup -c rollup.config.js -w",`每次运行的时间太长，有23s，是不是每次都重新打包所有`js`文件导致的
