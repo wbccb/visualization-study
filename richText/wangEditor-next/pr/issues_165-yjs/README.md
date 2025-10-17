@@ -1577,8 +1577,43 @@ const handleScroll = () => {
 
 看`pr提交说明.md`
 
+> 下面是`pr提交说明.md`书写过程中出现的问题以及解决方案
 
+##### ✅5.4.1 增加use-editor-static.ts的useContext支持
+
+1. yjs-for-vue
+2. demo
+
+`editor`本身就是一个复杂的数据对象，具备数据 + 各种操作方法，在以前的3D编辑器中就出现过传递props: editor的内存泄露现象，这里使用`provide/inject`也是合理的
+
+因此可以直接废弃掉`props: editor`，不管其他组件的实现方式，但是demo中可以展示出`provide/inject`的使用方法
+
+主要在`useRemoteCursorOverlayPositions()`中，可以支持
+- 支持外部传入`editorRef`响应式数据
+- 如果外部没有传入`editorRef`响应式数据，则去`inject`获取
+
+
+##### ✅5.4.2 处理好eslint问题
+
+
+1. `@wangEditor-next/yjs`打包的文件`npm仓库`没有打包出`index.d.ts`，因此导致ts报错说要引入`@types/@wangEditor-next/yjs`，手动将`index.d.ts`复制到最外层的`index.js`同级
+2. `@wangEditor-next/yjs-for-vue`同样没有打包出`index.d.ts`的问题，但是它在package.json中设置`xx.d.ts`的路径为`"types": "./dist/yjs-for-vue/src/index.d.ts",`
+
+
+##### ✅5.4.3 依赖问题
+
+1. 如果不要用 --ignore-workspace，则会直接使用外层的node_modules，一些demo的调试特殊依赖在外层的node_modules就找不到
+2. 但是如果用了ignore-workspace，就会很不方便调试外层的文件夹，无法使用`workspace*`模式
+
+
+最终决定使用 `--ignore-workspace` + `"@wangeditor-next/yjs-for-vue": "portal:../../../yjs-for-vue"`
+- `"@wangeditor-next/yjs-for-vue": "portal:../../../yjs-for-vue"`
+- `"@wangeditor-next/yjs-for-vue": "file:../../../yjs-for-vue"`
+
+
+后期可以将`"@wangeditor-next/yjs-for-vue": "portal:../../../yjs-for-vue"`改为版本号，跟`frontend文件夹`的demo统一
 
 ## 可能还存在的问题
 
 1. `"dev-watch": "cross-env NODE_ENV=development rollup -c rollup.config.js -w",`每次运行的时间太长，有23s，是不是每次都重新打包所有`js`文件导致的
+2. 单独格式化`packages/yjs/examples/frontend-vue3`还是有点问题，因为我是忽视项目`pnpm install --ignore-workspace`导致了无法使用外部node_modules的`eslint`，如果内部又创建一个新的`eslint`，提交代码时过不了husky的检测，说由于你使用 pnpm，它默认会 hoist（提升）依赖到根 node_modules，但某些情况下（如版本冲突、peerDependencies），子项目也会保留自己的 node_modules=>结果：ESLint 同时加载了 两个路径下的 eslint-plugin-import，无法确定用哪个，于是报错
