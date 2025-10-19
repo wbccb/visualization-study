@@ -1669,7 +1669,126 @@ const handleScroll = () => {
 - 如果A界面一直在每一行的最后面插入文字，则表现正常
 
 
+两个方向
+- 要么就是A界面的slate -> Y.js出错
+- 要么就是A界面的Y.js -> B界面的Y.js出错
+- 要么就是B界面的Y.js -> B界面的slate出错
 
+
+###### 5.4.4.1 handleYEvents(): B界面的Y.js -> B界面的slate出错
+
+在Yjs->slate打印出操作
+
+```ts
+export function applyYjsEvents(sharedRoot: Y.XmlText, editor: Editor, events: Y.YEvent<Y.XmlText>[]) {
+  Editor.withoutNormalizing(editor, () => {
+    events.forEach((event) => {
+      translateYjsEvent(sharedRoot, editor, event).forEach((op) => {
+        console.warn("applyYjsEvents转换Y.js为slate操作", op);
+        console.log("applyYjsEvents转换Y.js为slate操作", JSON.stringify(op));
+        editor.apply(op);
+      });
+    });
+  });
+}
+```
+
+![alt text](images/image.png)
+
+
+------------------------------------------------------------------------------
+
+不对！我搞错了，`split_node`切割为两个字段，然后在`[0, 1]`位置插入`哈`，上面这个转化是正确的！！
+
+
+
+```ts
+export function applyYjsEvents(sharedRoot: Y.XmlText, editor: Editor, events: Y.YEvent<Y.XmlText>[]) {
+  Editor.withoutNormalizing(editor, () => {
+    events.forEach((event, eventIndex) => {
+      console.group(`📦 Processing Yjs Event ${eventIndex}`);
+      console.log("Yjs Delta:", event.delta);
+
+      const ops = translateYjsEvent(sharedRoot, editor, event);
+      console.log(`Generated ${ops.length} Slate operations:`, ops);
+
+      ops.forEach((op, opIndex) => {
+        console.group(`⚙️ Applying op ${opIndex}: ${op.type}`);
+        console.log("Operation:", op);
+
+        // 打印应用前的状态（关键！）
+        console.log("Slate before this op:", JSON.stringify(editor.children, null, 2));
+        console.log("Full text before:", Node.string(editor));
+
+        try {
+          editor.apply(op);
+        } catch (error) {
+          console.error("❌ Failed to apply operation:", error);
+          console.error("Operation that failed:", op);
+          console.groupEnd();
+          throw error;
+        }
+
+        // 打印应用后的状态（关键！）
+        console.log("Slate after this op:", JSON.stringify(editor.children, null, 2));
+        console.log("Full text after:", Node.string(editor));
+        console.groupEnd();
+      });
+
+      console.groupEnd();
+    });
+
+    // 打印最终状态
+    console.group("✅ applyYjsEvents - AFTER applying all events");
+    console.log("Slate document after:", JSON.stringify(editor.children, null, 2));
+    console.log("Full text after:", Node.string(editor));
+    console.groupEnd();
+  });
+}
+```
+
+![alt text](images/image-1.png)
+
+发现问题！
+
+第一个操作`split_node`没有生效？？应该切割为两个字段才对，就是因为这个没生效，导致后续的`insert_node`找不到位置
+
+![alt text](images/image-2.png)
+
+而且随着一直转化错误，A界面实际的Y.js的状态总是对的.....就Y.js->slate一直错误而已！！！
+
+经过测试，`insert_code`是没问题的，比如你可以在开头插入文本，或者在末尾插入文本，都不会触发`split_node`，只会触发`insert_node`，表现是对的！
+
+只有涉及到`split_node`才会出错...
+
+
+------
+
+###### 5.4.4.2 split_node为什么会出错
+
+
+![alt text](images/image-3.png)
+
+
+我发现了，`split_node`已经生效了，并且成功了！
+
+然后会继续执行`Editor.normalize(editor)`，这段代码会执行
+```ts
+Transforms.mergeNodes(editor, {
+    at: path.concat(n),
+    voids: true
+});
+```       
+
+进行两个node节点的合并，最终再次触发一个新的操作：`merge_node`导致刚刚`split_node`的数据又重新合并了
+
+###### 5.4.4.2 暂时可以怎么解决？
+
+![alt text](images/image-4.png)
+
+强制加个属性进去！强硬阻止它合并！可以暂时解决这个问题！！
+
+> 后面再想想具体解决方法吧
 
 
 ## 可能还存在的问题
