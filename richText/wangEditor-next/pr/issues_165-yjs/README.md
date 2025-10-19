@@ -122,9 +122,18 @@ export {
 光标计算的核心在于：将`Slate`的绝对光标位置转换为`Y.js`的相对光标位置，并通过`Awareness`协议进行同步
 
 
+
+
 #### 1.1 本地位置变更
 
+![alt text](./images/@wangEditor-yjs分析.svg)
+
+
+
+##### 1.1.1 触发本地Y.js更新
+
 当用户在本地Editor发生操作导致位置改变时，会触发`wangEditor`的`onChange`方法
+> 在withYjs.ts中为onChange增加方法
 
 从而调用`YjsEditor.flushLocalChanges(e)`将本地slate操作同步到`Y.js`文档树
 ```ts
@@ -134,11 +143,41 @@ e.onChange = () => {
   if (YjsEditor.connected(e)) {
     YjsEditor.flushLocalChanges(e)
   }
-  onChange()
+  onChange() // Editor原来的onChange()
 }
 ```
 
-然后触发`CursorEditor.sendCursorPosition(e)`
+`flushLocalChanges()`就是执行多个封装好的方法，比如`TEXT_MAPPER`、`NODE_MAPPER`，然后触发Yjs相关API进行本地Y.js对象数据的更新 => 发送广播到其它客户端 => 触发其它客户端的本地Y.js更新 => 触发其它客户端的slate更新
+
+```ts
+import { NODE_MAPPER } from './node'
+import { TEXT_MAPPER } from './text'
+import { ApplyFunc, OpMapper } from './types'
+
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const NOOP = () => {}
+
+const opMappers: OpMapper = {
+  ...TEXT_MAPPER,
+  ...NODE_MAPPER,
+
+  set_selection: NOOP,
+}
+
+export function applySlateOp(sharedRoot: Y.XmlText, slateRoot: Node, op: Operation): void {
+  const apply = opMappers[op.type] as ApplyFunc<typeof op>
+
+  if (!apply) {
+    throw new Error(`Unknown operation: ${op.type}`)
+  }
+
+  apply(sharedRoot, slateRoot, op)
+}
+```
+
+##### 1.1.2 发送sendCursorPosition更新其它客户端的cursor和range
+
+
 ```ts
 // Boot.registerPlugin(
 //   withCursors(wsProvider.awareness, {
@@ -154,6 +193,10 @@ e.onChange = () => {
 }
 ```
 
+本地位置变更触发`CursorEditor.sendCursorPosition(e)`
+
+
+> 接下来的分析都是基于`发送sendCursorPosition更新其它客户端的cursor和range`，因为yjs-for-vue本质只需要关心curosr和range，不需要关心本地Y.js内容同步逻辑，都封装在yjs中
 
 #### 1.2 转化为Y.js相对位置并发送
 
@@ -1619,6 +1662,11 @@ const handleScroll = () => {
 
 > 发现yjs-for-react也有这种问题，应该是yjs这个模块的问题，在另外的模块中提交pr，这里只做原因分析
 
+
+
+问题描述
+- A界面存在很大概率如果插入的位置不是最后面，其它节目都会在最后面插入文字
+- 如果A界面一直在每一行的最后面插入文字，则表现正常
 
 
 
