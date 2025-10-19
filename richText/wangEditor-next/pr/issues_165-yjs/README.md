@@ -1613,6 +1613,17 @@ const handleScroll = () => {
 
 后期可以将`"@wangeditor-next/yjs-for-vue": "portal:../../../yjs-for-vue"`改为版本号，跟`frontend文件夹`的demo统一
 
+
+##### 5.4.4 A界面在中间插入文字，B界面和C界面显示在最后面插入文字，造成文字错乱
+![5.4.4界面错误显示](./images/image.png)
+
+> 发现yjs-for-react也有这种问题，应该是yjs这个模块的问题，在另外的模块中提交pr，这里只做原因分析
+
+
+
+
+
+
 ## 可能还存在的问题
 
 1. `"dev-watch": "cross-env NODE_ENV=development rollup -c rollup.config.js -w",`每次运行的时间太长，有23s，是不是每次都重新打包所有`js`文件导致的
