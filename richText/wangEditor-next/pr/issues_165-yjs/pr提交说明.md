@@ -38,6 +38,22 @@ provideEditor(editorRef)
 
 ```
 
+如果editorRef没有在props中传递，并且也没有使用`provide/inject`，会直接抛出错误：`[useEditorStatic] editor context not provided.Call provideEditor() in a parent component before using useEditorStatic().`
+
+```ts
+export const useEditorStatic = (): ShallowRef<IDomEditor | undefined> => {
+  const context = inject<EditorContext>(EDITOR_CONTEXT_KEY)
+
+  if (!context) {
+    // 如果外部没有provide(ShallowRef)，则报错
+    throw new Error(
+      '[useEditorStatic] editor context not provided.Call provideEditor() in a parent component before using useEditorStatic().',
+    )
+  }
+  return context.editor
+}
+```
+
 
 ### useRemoteCursorStates.ts
 
@@ -143,6 +159,21 @@ const computeOverlayPosition = (newCursorsValue: Record<string, CursorState<TCur
 ```
 
 
-## demo-演示视频
+## demo
+
+### 代码地址
+
+与`yjs-for-react`的demo一致，放在`packages/yjs/examples/frontend-vue3`中
+
+由于最外层的package.json中声明了`"packageManager": "pnpm@9.15.0",`
+
+因此demo也是用`pnpm`进行管理
+- 由于`pnpm`会进行`node_modules`提升，因此demo是用了`pnpm run install:ignore-workspace`独立安装依赖
+- 使用`"@wangeditor-next/yjs-for-vue": "portal:../../../yjs-for-vue",`进行库文件的本地开发链接
+- 需要先`pnpm run yjs-for-vue:watch`进行`yjs-for-vue dist`文件的生成后再启动本地服务
+
+具体运行方式可看`packages/yjs/examples/frontend-vue3/README.md`
+
+### 演示视频
 
 https://github.com/user-attachments/assets/d9d4c057-48e7-4afd-9151-8ab051e0c28f
