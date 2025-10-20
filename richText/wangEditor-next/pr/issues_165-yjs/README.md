@@ -1657,7 +1657,7 @@ const handleScroll = () => {
 后期可以将`"@wangeditor-next/yjs-for-vue": "portal:../../../yjs-for-vue"`改为版本号，跟`frontend文件夹`的demo统一
 
 
-##### 5.4.4 A界面在中间插入文字，B界面和C界面显示在最后面插入文字，造成文字错乱
+##### ✅5.4.4 A界面在中间插入文字，B界面和C界面显示在最后面插入文字，造成文字错乱
 ![5.4.4界面错误显示](./images/image.png)
 
 > 发现yjs-for-react也有这种问题，应该是yjs这个模块的问题，在另外的模块中提交pr，这里只做原因分析
@@ -1789,6 +1789,53 @@ Transforms.mergeNodes(editor, {
 强制加个属性进去！强硬阻止它合并！可以暂时解决这个问题！！
 
 > 后面再想想具体解决方法吧
+
+
+##### ✅5.4.5 import { provideEditor } from '@wangeditor-next/yjs-for-vue' + Cannot resolve symbol 'provideEditor' 
+
+强行增加vite + ts的识别
+
+
+1. packages/yjs/examples/frontend-vue3/vite.config.ts
+
+```ts
+export default defineConfig({
+  plugins: [vue(), windi()],
+  resolve: {
+    alias: {
+      '@wangeditor-next/yjs-for-vue': resolve(
+        __dirname,
+        '../../../yjs-for-vue/dist/index.mjs',
+      ),
+    },
+  },
+  server: {
+    // 启用热更新监听库目录
+    watch: {
+      ignored: ['!**/src/**'],
+    },
+  },
+})
+```
+
+
+2. packages/yjs/examples/frontend-vue3/tsconfig.json
+
+```ts
+"paths": {
+    "@/*": ["src/*"]
+    "@/*": ["src/*"],
+    "@wangeditor-next/yjs-for-vue": ["../../../yjs-for-vue/dist/yjs-for-vue/src/index.d.ts"]
+},
+"include": [
+    "src/**/*",
+    "types/**/*.d.ts",
+    "vite.config.ts"
+    "vite.config.ts",
+    "../../../yjs-for-vue/dist/yjs-for-vue/src/index.d.ts"
+],
+```
+
 
 
 ## 可能还存在的问题
