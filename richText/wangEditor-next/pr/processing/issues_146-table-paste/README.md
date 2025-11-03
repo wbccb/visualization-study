@@ -173,3 +173,158 @@ function parseCommonElemHtml($elem: Dom7Array, editor: IDomEditor): Element[] {
 ![img.png](img.png)
 
 就是上面截图这个属性最终转化为`11`导致的border-width计算错误！！！!
+
+## 为什么会出现这种border: 1px solid #ccc，但是borderWidth: medium 1pt 1pt的现象？
+
+
+![alt text](image.png)
+
+下面的`e.dangerouslyInsertHtml(html)`就是上面截图中的`border-width: medium 1pt 1pt`，也就是说拿到的数据就是这样奇奇怪怪的格式，可能是进行了什么操作设置border导致的，因为上面一个`<td>`是正常的`border-width`或者`safari浏览器`就是如此（第一行正确，第二行开始就不正确）
+
+```ts
+function handleOnPaste(e, textarea, editor) {
+    //...
+    event.preventDefault();
+    var data = event.clipboardData;
+    if (data == null) {
+        return;
+    }
+    editor.insertData(data);
+}
+e.insertData = function (data) {
+    var e_1, _a;
+    var fragment = data.getData('application/x-slate-fragment');
+    // 只有从编辑器中内复制的内容，才会获取 fragment，从其他地方粘贴到编辑器中，不会获取 fragment
+    if (fragment) {
+        var decoded = decodeURIComponent(window.atob(fragment));
+        var parsed = JSON.parse(decoded);
+        e.insertFragment(parsed);
+        return;
+    }
+    var text = data.getData('text/plain');
+    var html = data.getData('text/html');
+    // const rtf = data.getData('text/rtf')
+    if (html) {
+        e.dangerouslyInsertHtml(html);
+        return;
+    }
+    //...
+}
+```
+
+
+## border-width到底有多少种格式？
+
+https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/border-width
+
+
+竟然有这么多种格式！！！我去！
+
+```css
+/* Keyword values */
+border-width: thin;
+border-width: medium;
+border-width: thick;
+
+/* <length> values */
+border-width: 4px;
+border-width: 1.2rem;
+
+/* top and bottom | left and right */
+border-width: 2px 1.5em;
+
+/* top | left and right | bottom */
+border-width: 1px 2em 1.5cm;
+
+/* top | right | bottom | left */
+border-width: 1px 2em 0 4rem;
+
+/* Global values */
+border-width: inherit;
+border-width: initial;
+border-width: revert;
+border-width: revert-layer;
+border-width: unset;
+```
+
+## 思考解决方式
+
+1. 直接去除`borderWidth.replace(/[^\d]/g, '')`?看对应的ts定义也是string类型，为什么一定要转为数字呢？
+```ts
+  borderWidth = getStyleValue($elem, 'border-width') || borderWidth // border 宽度
+  if (borderWidth) {
+    // tableNode.borderWidth = borderWidth.replace(/[^\d]/g, '')
+  }
+```
+
+
+> 1. 梳理整个解析流程
+> 2. 找出style的拼接代码，比如border-width="1"，肯定有个地方是进行 "1"->"1px"，然后拼接到border="1px solid xxx"
+
+
+### 梳理整个解析border-width流程
+
+
+```ts
+e.dangerouslyInsertHtml = function (html, isRecursive) {
+    var div = document.createElement('div');
+    div.innerHTML = html;
+    var domNodes = Array.from(div.childNodes);
+    domNodes.forEach(function (n, index) {
+    //...
+    var parsedRes = parseElemHtml($el, e);
+        //...
+    });
+}
+```
+
+```ts
+function parseElemHtml($elem, editor) {
+    //...
+    return parseCommonElemHtml($elem, editor);
+}
+
+function parseCommonElemHtml($elem, editor) {
+    var children = genChildren($elem, editor);
+    // parse
+    var parser = getParser$1($elem);
+    var parsedRes = parser($elem[0], children, editor);
+    if (!Array.isArray(parsedRes)) {
+        parsedRes = [parsedRes];
+    } // 临时处理为数组
+    parsedRes.forEach(function (elem) {
+        var isVoid = distExports$1.Editor.isVoid(editor, elem);
+        if (!isVoid) {
+            // 非 void ，如果没有 children ，则取纯文本
+            if (children.length === 0) {
+                elem.children = [{ text: $elem.text().replace(/\s+/gm, ' ') }];
+            }
+            // 处理 style
+            PARSE_STYLE_HTML_FN_LIST.forEach(function (fn) {
+                elem = fn($elem[0], elem, editor);
+            });
+        }
+    });
+    return parsedRes;
+}
+
+//...上面的parser()会根据类型调用，table -> tr -> td -> span不停调用这个`parseCommonElemHtml()`
+// 最终`<td>`会触发`PARSE_STYLE_HTML_FN_LIST.forEach(...)`调用tableModule的`parseStyleHtml()`，然后解析border-width
+
+function parseStyleHtml(elem: DOMElement, node: Descendant, _editor: IDomEditor): Descendant {
+  //...
+  borderWidth = getStyleValue($elem, 'border-width') || borderWidth // border 宽度
+  if (borderWidth) {
+    tableNode.borderWidth = borderWidth.replace(/[^\d]/g, '')
+  }
+  //...
+}
+```
+
+
+```ts
+
+```
+
+
+### 找出style的拼接代码
