@@ -266,14 +266,17 @@ border-width: unset;
 
 
 ```ts
+// packages/core/src/editor/plugins/with-content.ts
 e.dangerouslyInsertHtml = function (html, isRecursive) {
     var div = document.createElement('div');
     div.innerHTML = html;
     var domNodes = Array.from(div.childNodes);
     domNodes.forEach(function (n, index) {
-    //...
-    var parsedRes = parseElemHtml($el, e);
         //...
+        if (isParseMatch) {
+            var parsedRes = parseElemHtml($el, e);
+            //...
+        }
     });
 }
 ```
@@ -321,10 +324,80 @@ function parseStyleHtml(elem: DOMElement, node: Descendant, _editor: IDomEditor)
 }
 ```
 
+上面的展示只是最外层`$elem[0]`的解析，在`parseCommonElemHtml()`中触发了`genChildren()`
+- 获取当前`childNodes = $elem[0].childNodes`，遍历`childNodes`触发`parseElemHtml()`，也就是上面的流程，`parseElemHtml()` -> `parseCommonElemHtml()` -> `parseStyleHtml()`
+- 其中`parseCommonElemHtml()`又会再度触发`genChildren()`的递归处理
 
 ```ts
+function genChildren($elem: Dom7Array, editor: IDomEditor): Descendant[] {
+    //...
+  const childNodes = $elem[0].childNodes
+    //...
+  // 遍历 DOM 子节点，生成 slate elem node children
+  childNodes.forEach(child => {
+    if (isDOMElement(child)) {
+        //...
 
+      // 其他 elem
+      const $child = $(child)
+      const parsedRes = parseElemHtml($child, editor)
+
+      if (Array.isArray(parsedRes)) {
+        parsedRes.forEach(el => children.push(el))
+      } else {
+        children.push(parsedRes)
+      }
+      return
+    }
+    //...
+  })
+  return children
+}
 ```
 
 
 ### 找出style的拼接代码
+
+最终将解析出来的数据 + `px`进行拼凑！
+
+```ts
+export function renderStyle(node: Descendant, vnode: VNode): VNode {
+  if (!Element.isElement(node)) { return vnode }
+
+  const {
+    backgroundColor, borderWidth, borderStyle, borderColor, textAlign,
+  } = node as TableCellElement
+
+  const props: TableCellProperty = {}
+
+  if (backgroundColor) { props.backgroundColor = backgroundColor }
+  if (borderWidth) { props.borderWidth = `${borderWidth}px` }
+  if (borderStyle) { props.borderStyle = borderStyle === 'none' ? '' : borderStyle }
+  if (borderColor) { props.borderColor = borderColor }
+  if (textAlign) { props.textAlign = textAlign }
+
+  const styleVnode: VNode = vnode
+
+  if (node.type === 'table') {
+    addVnodeStyle((styleVnode.children?.[0] as VNode).children?.[0] as VNode, props)
+  } else {
+    addVnodeStyle(styleVnode, props)
+  }
+  return styleVnode
+}
+```
+
+> 其它地方也是这样解析border的吗？其它地方会不会有解析多种方式，只是table比较特殊而已？
+
+好像确实只有`table`这种元素才有`border`...
+
+
+
+## 改变拼接模式
+
+1. 直接获取border-width
+2. 直接将获取的border-width塞入VNode，不再进行拼接
+   
+### 问题思考
+1. 最终形成的是`border-width`、`border-style`、`border-color`还是`border`？如果是`border`遇到`border-width: 1px 2em 1.5cm;`是不是有问题？
+2. 如果同时存在`border-width`、`border-style`、`border`，但是缺乏`border-color`，从`border`提取的`border-color`逻辑是不是有问题？因为是直接`split(" ")`逻辑
