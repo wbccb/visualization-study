@@ -2,7 +2,8 @@
 
 ## 问题发生的原因
 
-![alt text](image.png)
+![img.png](img.png)
+
 
 如上图所示，从`safari`复制过来的数据中出现了`border-width: medium 1pt 1pt`的数据
 
@@ -93,3 +94,12 @@ border-width: unset;
   - 如果是非`pt`的数据，则保留原来的样式，包括`1px`、`1.5em`、`medium`等等
 ```
 增加多种样式的解析
+
+
+## example测试
+
+![alt text](image.png)
+
+上图是从safari复制拿到的数据，下面是修正代码后拿到的样式数据
+
+![img_2.png](img_2.png)
