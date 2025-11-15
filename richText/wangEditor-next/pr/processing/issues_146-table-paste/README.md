@@ -401,3 +401,83 @@ export function renderStyle(node: Descendant, vnode: VNode): VNode {
 ### 问题思考
 1. 最终形成的是`border-width`、`border-style`、`border-color`还是`border`？如果是`border`遇到`border-width: 1px 2em 1.5cm;`是不是有问题？
 2. 如果同时存在`border-width`、`border-style`、`border`，但是缺乏`border-color`，从`border`提取的`border-color`逻辑是不是有问题？因为是直接`split(" ")`逻辑
+3. 出现`border-width: 1pt`，是否需要转化为`px`？应该去验证WPS、语雀、飞书等黏贴处理模式，比如1pt处理为1.3333px
+
+
+### 测试用例思考
+
+- `packages/table-module/__tests__/parse-html.test.ts`用的是`packages/table-module/src/module/parse-elem-html.ts`
+- 但是我们黏贴数据时触发的是`packages/core/src/parse-html/parse-elem-html.ts`
+
+> 这两者的区别是什么？我的测试用例要写在`table-module`还是`core`呢？
+
+
+
+在`core`的`parseElemHtml()`解析中，会触发
+- var parser = getParser$1($elem);
+- var parsedRes = parser($elem[0], children, editor);
+  
+这个`parse()`会触发`packages/table-module/src/module/parse-elem-html.ts`！也就是某一种类型的具体解析方式
+
+但是如下面代码所示，我们在触发`parser()`，也就是`packages/table-module/__tests__/parse-html.test.ts`中的`parseCellHtml()`之后，我们还会再触发`PARSE_STYLE_HTML_FN_LIST.forEach()`进行style数据的处理
+
+因此你的测试用例不能直接使用`parseCellHtml()`！因为这样你是拿不到处理后的style的！你得用`parseCommonElemHtml()`或者`parseElemHtml()`
+
+```ts
+// packages/core/src/parse-html/parse-elem-html.ts
+function parseElemHtml($elem, editor) {
+    //...
+    return parseCommonElemHtml($elem, editor);
+}
+
+function parseCommonElemHtml($elem, editor) {
+    var children = genChildren($elem, editor);
+    // parse
+    var parser = getParser$1($elem);
+    var parsedRes = parser($elem[0], children, editor);
+    if (!Array.isArray(parsedRes)) {
+        parsedRes = [parsedRes];
+    } // 临时处理为数组
+    parsedRes.forEach(function (elem) {
+        var isVoid = distExports$1.Editor.isVoid(editor, elem);
+        if (!isVoid) {
+            // 非 void ，如果没有 children ，则取纯文本
+            if (children.length === 0) {
+                elem.children = [{ text: $elem.text().replace(/\s+/gm, ' ') }];
+            }
+            // 处理 style
+            PARSE_STYLE_HTML_FN_LIST.forEach(function (fn) {
+                elem = fn($elem[0], elem, editor);
+            });
+        }
+    });
+    return parsedRes;
+}
+```
+
+
+### 测试用例遇到的问题
+
+
+`parseElemHtml()`依赖一个全局的对象数据，直接触发`registerTableModule()`又会导致莫名其妙的错误：`Error: Duplicated key 'insertTable' in menu items`
+
+```ts
+/**
+ * @description create editor for test
+ * @author wbccb
+ */
+import wangEditorTableModule from '@wangeditor-next/table-module'
+
+import parseElemHtml from '../../packages/core/src/parse-html/parse-elem-html'
+import registerModule from '../../packages/editor/src/register-builtin-modules/register'
+
+export function registerTableModule() {
+  registerModule(wangEditorTableModule)
+}
+
+export function parseElemHtmlFromCore($elem: any, editor: any) {
+  registerTableModule()
+  return parseElemHtml($elem, editor)
+}
+```
+
