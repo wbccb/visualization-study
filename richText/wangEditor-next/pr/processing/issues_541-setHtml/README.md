@@ -130,49 +130,144 @@ normalizeNode: function normalizeNode(entry) {
 
 ```ts
 function fixLinkFocusIfError(editor: IDomEditor, elem: Element) {
+  // 只针对<p>123334433<a></a></p>（a标签必须在p标签的最后一个child）的情况，其它情况不在这方法中检测
   if (elem.type === 'paragraph' && elem.children) {
     const children = elem.children as Element[]
 
-    if (children[children.length - 1].type === 'link') {
-      const { selection } = editor
+    if (children[children.length - 1].type !== 'link') {
+      return
+    }
+    const { selection } = editor
 
-      if (!selection || Range.isExpanded(selection)) {
-        return
+    if (!selection || Range.isExpanded(selection)) {
+      return
+    }
+
+    const { path } = selection.focus
+    const currentPath = [...path]
+    let currentNode: Node | null = null
+
+    while (currentPath.length > 0) {
+      // 检查当前光标是否在 link 内部
+      currentNode = Node.get(editor, currentPath)
+      const currentNodeType = DomEditor.getNodeType(currentNode)
+
+      if (currentNodeType !== 'link') {
+        currentPath.pop() // 向上一级
+      } else {
+        break
       }
 
-      const { path } = selection.focus
-      const currentPath = [...path]
-      let currentNode: Node | null = null
-
-      while (currentPath.length > 0) {
-        // 检查当前光标是否在 link 内部
-        currentNode = Node.get(editor, path)
-        const currentNodeType = DomEditor.getNodeType(currentNode)
-
-        if (currentNodeType !== 'link') {
-          currentPath.pop() // 向上一级
-        } else {
-          break
-        }
+      if (currentPath.length === 0) {
+        // 如果光标不在link内部，不用执行下面的修正，将currentNode置为null
+        currentNode = null
       }
-      if (!currentNode) {
-        return
-      }
-      const parentPath = Path.parent(currentPath)
-      const parentNode = Node.get(editor, parentPath) as Element
+    }
+    if (!currentNode) {
+      return
+    }
+    // 走到这一步说明光标在link内部，获取link的父元素
+    const parentPath = Path.parent(currentPath)
+    const parentNode = Node.get(editor, parentPath) as Element
 
-      if (DomEditor.getNodeType(parentNode) === 'paragraph') {
-        const lastChildIndex = parentNode.children.length - 1
-        const lastChildPath = [...parentPath, lastChildIndex]
-        const lastChild = Node.get(editor, lastChildPath)
+    if (DomEditor.getNodeType(parentNode) === 'paragraph') {
+      const lastChildIndex = parentNode.children.length - 1
+      const lastChildPath = [...parentPath, lastChildIndex]
+      const lastChild = Node.get(editor, lastChildPath)
 
-        if (Text.isText(lastChild) && lastChild.text === '') {
-          // 将光标移动到空文本节点后面
-          Transforms.select(editor, { path: lastChildPath, offset: 0 })
-        }
+      if (Text.isText(lastChild) && lastChild.text === '') {
+        // 再度检测link的最后一个元素是不是空文本节点
+        // 将光标移动到空文本节点的后面
+        Transforms.select(editor, { path: lastChildPath, offset: 0 })
       }
     }
   }
 }
+
+function insertElemToEditor(editor: IDomEditor, elem: Element) {
+  if (editor.isInline(elem)) {
+    // inline elem 直接插入
+    editor.insertNode(elem)
+
+    // link 特殊处理，否则后面插入的文字全都在 a 里面 issue#4573
+    if (elem.type === 'link') { editor.insertFragment([{ text: '' }]) }
+  } else {
+    // block elem ，另起一行插入 —— 重要
+    Transforms.insertNodes(editor, elem, { mode: 'highest' })
+
+    // https://github.com/wangeditor-next/wangEditor-next/issues/541
+    // <p>123<a></a></p>的情况下，当a标签在p标签的最后一个元素时，会自动添加一个空格在a标签后面，但是光标位置并没有实时更新
+    // 由于光标位置一直在a标签后面，当后面还有元素插入时，由于光标位置错误，会错误splitNode将空格划入新的一行导致空行出现
+    fixLinkFocusIfError(editor, elem)
+  }
+}
 ```
 
+```ts
+import { parseParagraphHtmlConf } from '../../../../basic-modules/src/modules/paragraph/parse-elem-html'
+
+test('dangerouslyInsertHtml should not add blank lines after inserting <p><a></a></p>', () => {
+  // insertText 必须要设置 selection 才能生效
+  setEditorSelection(baseEditor)
+
+  const htmlString = '<p><a>222</a></p><p>更新</p><p><a>222</a></p><p>更新</p><p><a>222</a></p><p>更新</p>'
+
+  registerParseElemHtmlConf(parseParagraphHtmlConf)
+  registerParseElemHtmlConf(parseHtmlConf)
+
+  baseEditor.dangerouslyInsertHtml(htmlString)
+
+  expect(baseEditor.dangerouslyInsertHtml(htmlString)).toBeUndefined()
+  console.log(JSON.stringify(baseEditor.children))
+  expect(baseEditor.children).toStrictEqual([
+    {
+      type: 'paragraph',
+      children: [
+        { text: '' },
+        {
+          type: 'link',
+          url: '',
+          target: '',
+          children: [{ text: '222' }],
+        },
+        { text: '' },
+      ],
+    },
+    { type: 'paragraph', children: [{ text: '更新' }] },
+    {
+      type: 'paragraph',
+      children: [
+        { text: '' },
+        {
+          type: 'link',
+          url: '',
+          target: '',
+          children: [{ text: '222' }],
+        },
+        { text: '' },
+      ],
+    },
+    { type: 'paragraph', children: [{ text: '更新' }] },
+    {
+      type: 'paragraph',
+      children: [
+        { text: '' },
+        {
+          type: 'link',
+          url: '',
+          target: '',
+          children: [{ text: '222' }],
+        },
+        { text: '' },
+      ],
+    },
+    { type: 'paragraph', children: [{ text: '更新' }] },
+  ])
+})
+```
+
+但是其实指标不治本！
+
+当你手动设置光标在`<a></a>`标签后面时，你再插入`<p><a href="" target="">222</a></p><p>哈哈</p>`，还是会splitNode然后生成一个空行...
+
+就是因为你手动设置的时候，光标位置也是在`<link>`和`空格`之间，根本无法解决！
